@@ -92,3 +92,43 @@ button {
 
 .status-pending { color: orange; font-weight: bold; }
 .status-approved { color: green; font-weight: bold; }
+
+/* Styling for Admin Tables */
+table {
+    width: 100%;
+    background: white;
+    margin-bottom: 20px;
+    border-radius: 8px;
+    overflow: hidden;
+    border-spacing: 0;
+}
+
+th, td {
+    padding: 12px 15px;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.type-badge {
+    background: #3498db;
+    color: white;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+}
+
+/* Style for delete buttons in the admin panel */
+.delete-btn, button[onclick^="delete"] {
+    background-color: #e74c3c; /* Red color */
+    color: white;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+}
+
+button[onclick^="delete"]:hover {
+    background-color: #c0392b;
+}
+

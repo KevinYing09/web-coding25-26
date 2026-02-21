@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Report an Item</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <nav>
+        <div class="logo">🏫 School Finder</div>
+        <ul>
+            <li><a href="index.html">View Items</a></li>
+            <li><a href="report.html" class="active">Report Found Item</a></li>
+            <li><a href="admin.html">Admin Panel</a></li>
+        </ul>
+    </nav>
+
+    <div class="form-container">
+        <h2>Found Something?</h2>
+        <form id="reportForm">
+            <label>Item Name</label>
+            <input type="text" id="itemName" required>
+            
+            <label>Location Found</label>
+            <input type="text" id="location" required>
+            
+            <label>Upload Photo</label>
+            <input type="file" id="photoFile" accept="image/*" required>
+            
+            <label>Description</label>
+            <textarea id="description" rows="4"></textarea>
+            
+            <button type="submit">Submit Item</button>
+        </form>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>

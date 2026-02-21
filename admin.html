@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<div id="adminAuth" class="auth-overlay">
+  
+    <div class="auth-box">
+        <h3>Admin Access Required</h3>
+        <input type="password" id="adminPass" placeholder="Enter Password">
+        <button onclick="checkAdminPass()">Login</button>
+        <p id="loginError" style="color:red; display:none;">Incorrect Password</p>
+    </div>
+</div>
+
+<main id="adminContent" style="display:none;">
+    </main>
+<head>
+    <meta charset="UTF-8">
+    <title>Admin Panel</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <nav>
+        <div class="logo">🏫 Admin Portal</div>
+        <ul>
+            <li><a href="index.html">Public View</a></li>
+        </ul>
+    </nav>
+
+    <main>
+        <h2>Manage Postings</h2>
+        <table width="100%" style="background:white; padding:20px; border-radius:8px;">
+            <thead>
+                <tr style="text-align:left;">
+                    <th>Item</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="adminTable"></tbody>
+        </table>
+    </main>
+    <script src="script.js"></script>
+</body>
+</html>

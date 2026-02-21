@@ -1,39 +1,20 @@
-// Initialize "Database" from LocalStorage
-let items = JSON.parse(localStorage.getItem('schoolItems')) || [];
+// 1. YOUR FIREBASE CONFIGURATION
+const firebaseConfig = {
+        apiKey: "AIzaSyBPfaUczJPKQQ-WYpDNWuoDC4h_7TQbzRQ",
+        authDomain: "school-lost-and-found-43b02.firebaseapp.com",
+        projectId: "school-lost-and-found-43b02",
+        storageBucket: "school-lost-and-found-43b02.firebasestorage.app",
+        messagingSenderId: "511480295301",
+        appId: "1:511480295301:web:e397b7537f9e7ad06b5eec"
+};
 
-// --- 1. HANDLE FILE UPLOAD ---
-const reportForm = document.getElementById('reportForm');
-if (reportForm) {
-    reportForm.addEventListener('submit', function(e) {
-        e.preventDefault();
-        
-        const file = document.getElementById('photoFile').files[0];
-        const reader = new FileReader();
+// Initialize Firebase
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+const storage = firebase.storage();
 
-        reader.onloadend = function() {
-            const newItem = {
-                id: Date.now(),
-                name: document.getElementById('itemName').value,
-                location: document.getElementById('location').value,
-                image: reader.result, // This is the Base64 image string
-                desc: document.getElementById('description').value,
-                status: 'pending'
-            };
-            
-            items.push(newItem);
-            localStorage.setItem('schoolItems', JSON.stringify(items));
-            alert('Item reported successfully!');
-            window.location.href = 'index.html';
-        };
-
-        if (file) {
-            reader.readAsDataURL(file); // Converts image to string
-        }
-    });
-}
-
-// --- 2. ADMIN PASSWORD PROTECTION ---
-const ADMIN_PASSWORD = "schooladmin123"; // You can change this
+// 2. ADMIN SECURITY LOGIC
+const ADMIN_PASSWORD = "schooladmin123"; 
 
 function checkAdminPass() {
     const pass = document.getElementById('adminPass').value;
@@ -51,86 +32,220 @@ function showAdminPanel() {
     if (authOverlay && adminContent) {
         authOverlay.style.display = 'none';
         adminContent.style.display = 'block';
-        renderAdmin(); // Call the table drawing function
+        
+        renderAdminTable();    // Loads the items
+        renderRequestsTable(); // Loads the student claims (New!)
     }
 }
 
-// Check session on page load
-window.onload = function() {
+// 3. REPORT FORM LOGIC (Upload to Cloud)
+
+const reportForm = document.getElementById('reportForm');
+if (reportForm) {
+    reportForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const fileInput = document.getElementById('photoFile');
+        const file = fileInput.files[0];
+        
+        if (!file) {
+            alert("Please select a photo.");
+            return;
+        }
+
+        const reader = new FileReader();
+        const submitBtn = e.target.querySelector('button');
+        submitBtn.disabled = true;
+        submitBtn.innerText = "Saving to Database...";
+
+    reader.onloadend = function() {
+      const img = new Image();
+      img.src = reader.result;
+      
+      img.onload = async function() {
+          // 1. Create a canvas to resize the image
+          const canvas = document.createElement('canvas');
+          const MAX_WIDTH = 600; // Resizes the width to 600px
+          const scaleSize = MAX_WIDTH / img.width;
+          canvas.width = MAX_WIDTH;
+          canvas.height = img.height * scaleSize;
+
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+          // 2. Convert to a compressed JPEG string (quality set to 0.7)
+          const shrunkImage = canvas.toDataURL('image/jpeg', 0.7); 
+
+          try {
+              await db.collection("items").add({
+                  name: document.getElementById('itemName').value,
+                  location: document.getElementById('location').value,
+                  description: document.getElementById('description').value,
+                  image: shrunkImage, 
+                  status: 'pending',
+                  createdAt: firebase.firestore.FieldValue.serverTimestamp()
+              });
+
+              alert('Item reported successfully! (Image resized for storage)');
+              window.location.href = 'index.html';
+          } catch (error) {
+              console.error("Actual Firebase Error:", error);
+              alert("Upload failed. Open the 'Inspect' console to see the real error.");
+              submitBtn.disabled = false;
+              submitBtn.innerText = "Submit Item";
+          }
+      };
+};
+        // This line triggers the conversion
+        reader.readAsDataURL(file);
+    });
+}
+
+// 4. PUBLIC GALLERY LOGIC (Real-time)
+const itemsGrid = document.getElementById('itemsGrid');
+// Add this small helper function at the top of Section 4
+const escapeQuotes = (str) => str.replace(/'/g, "\\'");
+
+db.collection("items")
+  .where("status", "==", "approved")
+  .onSnapshot((snapshot) => {
+      itemsGrid.innerHTML = '';
+      snapshot.forEach((doc) => {
+          const item = doc.data();
+          
+          // Clean the name so apostrophes don't break the onclick
+          const safeName = escapeQuotes(item.name);
+
+          itemsGrid.innerHTML += `
+            <div class="card">
+                <img src="${item.image}" alt="${item.name}">
+                <div class="card-content">
+                    <h3>${item.name}</h3>
+                    <p><strong>📍 Location:</strong> ${item.location}</p>
+                    <p>${item.description}</p>
+                    <button onclick="claimItem('${doc.id}', '${safeName}')">Inquire / Claim</button>
+                </div>
+            </div>`;
+      });
+  });
+
+// 5. ADMIN MANAGEMENT LOGIC
+function renderAdminTable() {
+    const adminTable = document.getElementById('adminTable');
+    if (!adminTable) return;
+
+    db.collection("items").orderBy("createdAt", "desc").onSnapshot((snapshot) => {
+        adminTable.innerHTML = '';
+        snapshot.forEach((doc) => {
+            const item = doc.data();
+            adminTable.innerHTML += `
+                <tr>
+                    <td><img src="${item.image}" width="50"></td>
+                    <td>${item.name}</td>
+                    <td><span class="status-${item.status}">${item.status}</span></td>
+                    <td>
+                        ${item.status === 'pending' ? 
+                          `<button onclick="updateStatus('${doc.id}', 'approved')">Approve</button>` : ''}
+                        <button style="background:red" onclick="deleteItem('${doc.id}')">Delete</button>
+                    </td>
+                </tr>`;
+        });
+    });
+}
+
+async function updateStatus(id, newStatus) {
+    await db.collection("items").doc(id).update({ status: newStatus });
+}
+
+async function deleteItem(id) {
+    if(confirm("Are you sure you want to remove this listing?")) {
+        await db.collection("items").doc(id).delete();
+    }
+}
+
+// 6. CLAIM/INQUIRY LOGIC
+function claimItem(id, name) {
+    const safeName = name.replace(/\\'/g, "'"); 
+    const type = prompt(`Inquiry for: ${safeName}\n\nType "1" to CLAIM this item.\nType "2" to INQUIRE (Ask a question).`);
+
+    if (type === "1" || type === "2") {
+        const studentName = prompt("Please enter your full name:");
+        if (!studentName) return;
+
+        const contactInfo = prompt("Please enter your school email or phone number:");
+        if (!contactInfo) return;
+
+        let studentMessage = "No specific question provided.";
+        if (type === "2") {
+            studentMessage = prompt("What is your question about this item?");
+            if (!studentMessage) studentMessage = "General Inquiry";
+        }
+
+        const requestLabel = (type === "1") ? "Claim" : "Inquiry";
+
+        saveRequestToFirestore(id, safeName, studentName, contactInfo, requestLabel, studentMessage);
+        
+        alert(type === "1" ? "Claim logged! Visit the Front Office." : "Inquiry sent! Staff will contact you.");
+    }
+}
+
+// 7. DATABASE HELPER
+async function saveRequestToFirestore(itemId, itemName, studentName, contact, requestType, message) {
+    try {
+        await db.collection("requests").add({
+            itemId: itemId,
+            itemName: itemName,
+            studentName: studentName,
+            contact: contact,
+            type: requestType,
+            message: message, // Saving the student's question
+            timestamp: firebase.firestore.FieldValue.serverTimestamp()
+        });
+    } catch (error) {
+        console.error("Error:", error);
+    }
+}
+
+// 8. ADMIN REQUESTS VIEWER
+function renderRequestsTable() {
+    const requestsTable = document.getElementById('requestsTable');
+    if (!requestsTable) return;
+
+    db.collection("requests").onSnapshot((snapshot) => {
+        requestsTable.innerHTML = '';
+        snapshot.forEach((doc) => {
+            const req = doc.data();
+            const date = req.timestamp ? req.timestamp.toDate().toLocaleDateString() : "Pending...";
+
+            requestsTable.innerHTML += `
+                <tr>
+                    <td><strong>${req.itemName}</strong></td>
+                    <td>${req.studentName}</td>
+                    <td>${req.contact}</td>
+                    <td><span class="type-badge">${req.type}</span></td>
+                    <td><em>${req.message || 'N/A'}</em></td>
+                    <td>${date}</td>
+                    <td>
+                        <button style="background:#e74c3c; padding: 5px 10px;" 
+                                onclick="deleteRequest('${doc.id}')">Remove</button>
+                    </td>
+                </tr>`;
+        });
+    });
+}
+
+// Function to delete a request
+async function deleteRequest(id) {
+    if(confirm("Mark this request as resolved and remove it?")) {
+        await db.collection("requests").doc(id).delete();
+    }
+}
+
+// Initialize Admin View if on admin page
+window.onload = () => {
     if (window.location.pathname.includes('admin.html')) {
         if (sessionStorage.getItem('isAdmin') === 'true') {
             showAdminPanel();
         }
     }
 };
-
-// --- REST OF YOUR PREVIOUS CODE ---
-// (Include the renderItems, updateStatus, and deleteItem functions here)
-
-// 2. Render Gallery (Only Approved Items)
-const itemsGrid = document.getElementById('itemsGrid');
-if (itemsGrid) {
-    function renderItems(filter = '') {
-        itemsGrid.innerHTML = '';
-        const approvedItems = items.filter(item => 
-            item.status === 'approved' && 
-            item.name.toLowerCase().includes(filter.toLowerCase())
-        );
-
-        approvedItems.forEach(item => {
-            itemsGrid.innerHTML += `
-                <div class="card">
-                    <img src="${item.image}" alt="item">
-                    <div class="card-content">
-                        <h3>${item.name}</h3>
-                        <p>📍 ${item.location}</p>
-                        <button onclick="claimItem(${item.id})">Claim Item</button>
-                    </div>
-                </div>
-            `;
-        });
-    }
-    renderItems();
-
-    document.getElementById('searchInput').addEventListener('input', (e) => {
-        renderItems(e.target.value);
-    });
-}
-
-// 3. Admin Functionality
-const adminTable = document.getElementById('adminTable');
-if (adminTable) {
-    function renderAdmin() {
-        adminTable.innerHTML = '';
-        items.forEach(item => {
-            adminTable.innerHTML += `
-                <tr>
-                    <td>${item.name}</td>
-                    <td><span class="status-${item.status}">${item.status}</span></td>
-                    <td>
-                        <button onclick="updateStatus(${item.id}, 'approved')">Approve</button>
-                        <button style="background:red" onclick="deleteItem(${item.id})">Delete</button>
-                    </td>
-                </tr>
-            `;
-        });
-    }
-    renderAdmin();
-}
-
-function updateStatus(id, newStatus) {
-    items = items.map(item => item.id === id ? {...item, status: newStatus} : item);
-    localStorage.setItem('schoolItems', JSON.stringify(items));
-    location.reload();
-}
-
-function deleteItem(id) {
-    items = items.filter(item => item.id !== id);
-    localStorage.setItem('schoolItems', JSON.stringify(items));
-    location.reload();
-}
-
-function claimItem(id) {
-    const name = prompt("Enter your name to claim this item:");
-    if(name) alert(`Request sent for item #${id}. Please visit the main office.`);
-}

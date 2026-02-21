@@ -19,8 +19,40 @@ nav {
     align-items: center;
 }
 
+.title {
+    font-size: 1.5rem;
+    font-weight: bold;
+    margin-left: -550px;
+}
+
 nav ul { display: flex; list-style: none; gap: 20px; }
 nav a { color: white; text-decoration: none; font-weight: bold; }
+
+/* Container for the logo and text */
+.logo {
+    display: flex;
+    align-items: center;
+    gap: 12px; /* Space between logo and text */
+    font-size: 1.5rem;
+    font-weight: bold;
+}
+
+/* Specific sizing for the logo image */
+.nav-logo {
+    height: 40px; /* Adjust this to make your logo bigger or smaller */
+    width: auto;  /* Maintains aspect ratio so it doesn't look squashed */
+    display: block;
+}
+
+/* Ensure the nav still spreads across the screen */
+nav {
+    background: var(--primary);
+    color: white;
+    padding: 0.8rem 2rem;
+    display: flex;
+    justify-content: space-between; /* Keeps logo on left, nav on right */
+    align-items: center;
+}
 
 main { padding: 2rem; max-width: 1200px; margin: auto; }
 

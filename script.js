@@ -128,6 +128,25 @@ db.collection("items")
       });
   });
 
+// SEARCH FUNCTIONALITY
+document.getElementById('searchInput').addEventListener('input', (e) => {
+    const searchTerm = e.target.value.toLowerCase();
+    const cards = document.querySelectorAll('.card');
+
+    cards.forEach(card => {
+        // Get the text from the h3 (name) and p (description)
+        const itemName = card.querySelector('h3').innerText.toLowerCase();
+        // Since description is in the modal, we'll check the card content
+        const cardText = card.innerText.toLowerCase();
+
+        if (itemName.includes(searchTerm) || cardText.includes(searchTerm)) {
+            card.style.display = "block";
+        } else {
+            card.style.display = "none";
+        }
+    });
+});
+
 // Modal Functions
 function openModal(img, name, loc, desc, id) {
     document.getElementById('modalImage').src = img;

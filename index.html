@@ -25,6 +25,19 @@
         </header>
 
         <section id="itemsGrid" class="grid"></section>
+
+        <div id="itemModal" class="modal-overlay" onclick="closeModal()">
+          <div class="modal-content" onclick="event.stopPropagation()">
+            <span class="close-button" onclick="closeModal()">&times;</span>
+            <img id="modalImage" src="" alt="Item Image">
+            <div class="modal-details">
+              <h2 id="modalName"></h2>
+              <p id="modalLocation"></p>
+              <p id="modalDescription"></p>
+              <div id="modalActionArea"></div>
+            </div>
+          </div>
+        </div>
     </main>
     <script src="script.js"></script>
 </body>

@@ -106,28 +106,46 @@ const itemsGrid = document.getElementById('itemsGrid');
 // Add this small helper function at the top of Section 4
 const escapeQuotes = (str) => str.replace(/'/g, "\\'");
 
+// 4. PUBLIC GALLERY LOGIC
 db.collection("items")
   .where("status", "==", "approved")
   .onSnapshot((snapshot) => {
       itemsGrid.innerHTML = '';
       snapshot.forEach((doc) => {
           const item = doc.data();
-          
-          // Clean the name so apostrophes don't break the onclick
           const safeName = escapeQuotes(item.name);
+          const safeDesc = escapeQuotes(item.description || "No description provided.");
 
           itemsGrid.innerHTML += `
-            <div class="card">
+            <div class="card" onclick="openModal('${item.image}', '${safeName}', '${item.location}', '${safeDesc}', '${doc.id}')">
                 <img src="${item.image}" alt="${item.name}">
                 <div class="card-content">
                     <h3>${item.name}</h3>
-                    <p><strong>📍 Location:</strong> ${item.location}</p>
-                    <p>${item.description}</p>
-                    <button onclick="claimItem('${doc.id}', '${safeName}')">Inquire / Claim</button>
+                    <p>📍 ${item.location}</p>
+                    <button onclick="event.stopPropagation(); claimItem('${doc.id}', '${safeName}')">Inquire / Claim</button>
                 </div>
             </div>`;
       });
   });
+
+// Modal Functions
+function openModal(img, name, loc, desc, id) {
+    document.getElementById('modalImage').src = img;
+    document.getElementById('modalName').innerText = name;
+    document.getElementById('modalLocation').innerHTML = `<strong>📍 Location:</strong> ${loc}`;
+    document.getElementById('modalDescription').innerText = desc;
+    
+    // Add a claim button inside the modal too
+    document.getElementById('modalActionArea').innerHTML = `
+        <button style="margin-top:20px; width:100%;" onclick="claimItem('${id}', '${name}')">Inquire / Claim This Item</button>
+    `;
+
+    document.getElementById('itemModal').style.display = 'flex';
+}
+
+function closeModal() {
+    document.getElementById('itemModal').style.display = 'none';
+}
 
 // 5. ADMIN MANAGEMENT LOGIC
 function renderAdminTable() {

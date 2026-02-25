@@ -331,6 +331,10 @@ button[onclick^="update"]:hover {
     .grid {
         grid-template-columns: 1fr; /* Single column */
     }
+
+    #categoryFilter{
+        width: 80%;
+    }
     
     .logo span {
         font-size: 1.2rem;

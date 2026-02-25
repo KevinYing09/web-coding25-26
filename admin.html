@@ -12,6 +12,7 @@
 
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Panel</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
@@ -24,37 +25,43 @@
             <img src="images/logo.png" alt="School Logo" class="nav-logo">
             <span>Admin Portal</span>
         </div>
-        <ul>
+        <ul class = "navbar">
             <li><a href="index.html">Public View</a></li>
         </ul>
     </nav>
 
     <main>
       <h2>Manage Postings</h2>
-      <table width="100%" style="background:white; padding:20px; border-radius:8px;">
-          <thead>
-              <tr style="text-align:left;">
-                  <th>Item</th>
-                  <th>Status</th>
-                  <th>Actions</th>
-              </tr>
-          </thead>
-          <tbody id="adminTable"></tbody>
-      </table>
+    <div style="background:white; padding:20px; border-radius:8px; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
+        <table width="100%">
+            <thead>
+                <tr style="text-align:left;">
+                    <th>Photo</th>
+                    <th>Item</th>
+                    <th>Category</th> <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="adminTable"></tbody> </table>
+    </div>
 
       <h2>Student Claims & Inquiries</h2>
-      <table width="100%" style="background:white; padding:20px; border-radius:8px; border-collapse: collapse;">
-      <thead>
-        <tr style="text-align:left; border-bottom: 2px solid #eee;">
-            <th>Item Name</th>
-            <th>Student Name</th>
-            <th>Contact</th>
-            <th>Type</th>
-            <th>Message</th> <th>Date</th>
-            <th>Actions</th> </tr>
-      </thead>
-      <tbody id="requestsTable"></tbody>
-      </table>
+      <div style="background:white; padding:20px; border-radius:8px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); overflow-x: auto;">
+          <table width="100%" style="border-collapse: collapse;">
+              <thead>
+                  <tr style="text-align:left; border-bottom: 2px solid #eee;">
+                      <th style="padding:12px;">Item</th>
+                      <th style="padding:12px;">Student</th>
+                      <th style="padding:12px;">Contact</th>
+                      <th style="padding:12px;">Type</th>
+                      <th style="padding:12px;">Message/Question</th>
+                      <th style="padding:12px;">Date</th>
+                      <th style="padding:12px;">Actions</th>
+                  </tr>
+              </thead>
+              <tbody id="requestsTable"></tbody>
+          </table>
+      </div>
       <div id="adminContent" style="display:none;"></div>
       </div>
     </main>

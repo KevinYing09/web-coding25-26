@@ -38,75 +38,41 @@ function showAdminPanel() {
     }
 }
 
-// 3. REPORT FORM LOGIC (Upload to Cloud)
-
+// 3. REPORT FORM LOGIC
 const reportForm = document.getElementById('reportForm');
 if (reportForm) {
-    reportForm.addEventListener('submit', function(e) {
+    reportForm.addEventListener('submit', async (e) => {
         e.preventDefault();
-        
-        const fileInput = document.getElementById('photoFile');
-        const file = fileInput.files[0];
-        
-        if (!file) {
-            alert("Please select a photo.");
-            return;
+        const file = document.getElementById('photoFile').files[0];
+        const category = document.getElementById('itemCategory').value; // Get category
+
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = async (event) => {
+                const base64Image = event.target.result;
+                
+                await db.collection("items").add({
+                    name: document.getElementById('itemName').value,
+                    location: document.getElementById('location').value,
+                    category: category, // Save category
+                    description: document.getElementById('description').value,
+                    image: base64Image,
+                    status: "pending",
+                    timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                });
+
+                alert("Item reported! It will appear after admin approval.");
+                reportForm.reset();
+            };
+            reader.readAsDataURL(file);
         }
-
-        const reader = new FileReader();
-        const submitBtn = e.target.querySelector('button');
-        submitBtn.disabled = true;
-        submitBtn.innerText = "Saving to Database...";
-
-    reader.onloadend = function() {
-      const img = new Image();
-      img.src = reader.result;
-      
-      img.onload = async function() {
-          // 1. Create a canvas to resize the image
-          const canvas = document.createElement('canvas');
-          const MAX_WIDTH = 600; // Resizes the width to 600px
-          const scaleSize = MAX_WIDTH / img.width;
-          canvas.width = MAX_WIDTH;
-          canvas.height = img.height * scaleSize;
-
-          const ctx = canvas.getContext('2d');
-          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-
-          // 2. Convert to a compressed JPEG string (quality set to 0.7)
-          const shrunkImage = canvas.toDataURL('image/jpeg', 0.7); 
-
-          try {
-              await db.collection("items").add({
-                  name: document.getElementById('itemName').value,
-                  location: document.getElementById('location').value,
-                  description: document.getElementById('description').value,
-                  image: shrunkImage, 
-                  status: 'pending',
-                  createdAt: firebase.firestore.FieldValue.serverTimestamp()
-              });
-
-              alert('Item reported successfully! (Image resized for storage)');
-              window.location.href = 'index.html';
-          } catch (error) {
-              console.error("Actual Firebase Error:", error);
-              alert("Upload failed. Open the 'Inspect' console to see the real error.");
-              submitBtn.disabled = false;
-              submitBtn.innerText = "Submit Item";
-          }
-      };
-};
-        // This line triggers the conversion
-        reader.readAsDataURL(file);
     });
 }
 
-// 4. PUBLIC GALLERY LOGIC (Real-time)
+// 4. PUBLIC GALLERY LOGIC
 const itemsGrid = document.getElementById('itemsGrid');
-// Add this small helper function at the top of Section 4
 const escapeQuotes = (str) => str.replace(/'/g, "\\'");
 
-// 4. PUBLIC GALLERY LOGIC
 db.collection("items")
   .where("status", "==", "approved")
   .onSnapshot((snapshot) => {
@@ -116,8 +82,9 @@ db.collection("items")
           const safeName = escapeQuotes(item.name);
           const safeDesc = escapeQuotes(item.description || "No description provided.");
 
+          // This adds the content back inside the cards
           itemsGrid.innerHTML += `
-            <div class="card" onclick="openModal('${item.image}', '${safeName}', '${item.location}', '${safeDesc}', '${doc.id}')">
+            <div class="card" data-category="${item.category}" onclick="openModal('${item.image}', '${safeName}', '${item.location}', '${safeDesc}', '${doc.id}')">
                 <img src="${item.image}" alt="${item.name}">
                 <div class="card-content">
                     <h3>${item.name}</h3>
@@ -128,24 +95,32 @@ db.collection("items")
       });
   });
 
-// SEARCH FUNCTIONALITY
-document.getElementById('searchInput').addEventListener('input', (e) => {
-    const searchTerm = e.target.value.toLowerCase();
+// COMBINED SEARCH & CATEGORY FILTER
+function applyFilters() {
+    const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+    const selectedCategory = document.getElementById('categoryFilter').value;
     const cards = document.querySelectorAll('.card');
 
     cards.forEach(card => {
-        // Get the text from the h3 (name) and p (description)
         const itemName = card.querySelector('h3').innerText.toLowerCase();
-        // Since description is in the modal, we'll check the card content
-        const cardText = card.innerText.toLowerCase();
+        const itemCategory = card.getAttribute('data-category');
 
-        if (itemName.includes(searchTerm) || cardText.includes(searchTerm)) {
+        const matchesSearch = itemName.includes(searchTerm);
+        const matchesCategory = (selectedCategory === "all" || itemCategory === selectedCategory);
+
+        if (matchesSearch && matchesCategory) {
             card.style.display = "block";
         } else {
             card.style.display = "none";
         }
     });
-});
+}
+
+// Add listeners to both inputs
+if(document.getElementById('searchInput')) {
+    document.getElementById('searchInput').addEventListener('input', applyFilters);
+    document.getElementById('categoryFilter').addEventListener('change', applyFilters);
+}
 
 // Modal Functions
 function openModal(img, name, loc, desc, id) {
@@ -171,19 +146,26 @@ function renderAdminTable() {
     const adminTable = document.getElementById('adminTable');
     if (!adminTable) return;
 
-    db.collection("items").orderBy("createdAt", "desc").onSnapshot((snapshot) => {
+    db.collection("items").orderBy("timestamp", "desc").onSnapshot((snapshot) => {
         adminTable.innerHTML = '';
         snapshot.forEach((doc) => {
             const item = doc.data();
+            const safeName = item.name.replace(/'/g, "\\'");
+            
+            // Provide a fallback if category is missing
+            const itemCategory = item.category || "Uncategorized";
+
             adminTable.innerHTML += `
-                <tr>
-                    <td><img src="${item.image}" width="50"></td>
-                    <td>${item.name}</td>
-                    <td><span class="status-${item.status}">${item.status}</span></td>
+                <tr style="border-bottom: 1px solid #eee;">
+                    <td><img src="${item.image}" style="width:50px; height:50px; object-fit:cover; border-radius:4px;"></td>
+                    <td><strong>${item.name}</strong></td>
+                    <td><span class="type-badge" style="background:#95a5a6;">${itemCategory}</span></td>
+                    <td>${item.status === 'approved' ? '✅ Approved' : '⏳ Pending'}</td>
                     <td>
                         ${item.status === 'pending' ? 
-                          `<button onclick="updateStatus('${doc.id}', 'approved')">Approve</button>` : ''}
-                        <button style="background:red" onclick="deleteItem('${doc.id}')">Delete</button>
+                            `<button onclick="approveItem('${doc.id}')" style="background:#2ecc71; color:white; border:none; padding:5px 10px; border-radius:4px; margin-right:5px;">Approve</button>` 
+                            : ''}
+                        <button onclick="deleteItem('${doc.id}')" style="background:#e74c3c; color:white; border:none; padding:5px 10px; border-radius:4px;">Delete</button>
                     </td>
                 </tr>`;
         });
@@ -192,6 +174,18 @@ function renderAdminTable() {
 
 async function updateStatus(id, newStatus) {
     await db.collection("items").doc(id).update({ status: newStatus });
+}
+
+async function approveItem(id) {
+    try {
+        await db.collection("items").doc(id).update({
+            status: "approved"
+        });
+        alert("Item approved and added to the public gallery!");
+    } catch (error) {
+        console.error("Error approving item: ", error);
+        alert("Failed to approve item. Check the console for errors.");
+    }
 }
 
 async function deleteItem(id) {
@@ -243,28 +237,33 @@ async function saveRequestToFirestore(itemId, itemName, studentName, contact, re
     }
 }
 
-// 8. ADMIN REQUESTS VIEWER
+// 8. UPDATED ADMIN REQUESTS VIEWER
 function renderRequestsTable() {
     const requestsTable = document.getElementById('requestsTable');
     if (!requestsTable) return;
 
-    db.collection("requests").onSnapshot((snapshot) => {
+    db.collection("requests").orderBy("timestamp", "desc").onSnapshot((snapshot) => {
         requestsTable.innerHTML = '';
+        
+        if (snapshot.empty) {
+            requestsTable.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:20px;">No claims or inquiries yet.</td></tr>';
+            return;
+        }
+
         snapshot.forEach((doc) => {
             const req = doc.data();
-            const date = req.timestamp ? req.timestamp.toDate().toLocaleDateString() : "Pending...";
+            const date = req.timestamp ? req.timestamp.toDate().toLocaleDateString() : "Just now";
 
             requestsTable.innerHTML += `
-                <tr>
-                    <td><strong>${req.itemName}</strong></td>
-                    <td>${req.studentName}</td>
-                    <td>${req.contact}</td>
-                    <td><span class="type-badge">${req.type}</span></td>
-                    <td><em>${req.message || 'N/A'}</em></td>
-                    <td>${date}</td>
-                    <td>
-                        <button style="background:#e74c3c; padding: 5px 10px;" 
-                                onclick="deleteRequest('${doc.id}')">Remove</button>
+                <tr style="border-bottom: 1px solid #eee;">
+                    <td style="padding:12px;"><strong>${req.itemName}</strong></td>
+                    <td style="padding:12px;">${req.studentName}</td>
+                    <td style="padding:12px;">${req.contact}</td>
+                    <td style="padding:12px;"><span class="type-badge">${req.type}</span></td>
+                    <td style="padding:12px;"><em>${req.message || "No message"}</em></td>
+                    <td style="padding:12px;">${date}</td>
+                    <td style="padding:12px;">
+                        <button class="delete-btn" onclick="deleteRequest('${doc.id}')" style="background:#e74c3c; color:white; border:none; padding:5px 10px; border-radius:4px; cursor:pointer;">Remove</button>
                     </td>
                 </tr>`;
         });
@@ -273,8 +272,12 @@ function renderRequestsTable() {
 
 // Function to delete a request
 async function deleteRequest(id) {
-    if(confirm("Mark this request as resolved and remove it?")) {
-        await db.collection("requests").doc(id).delete();
+    if(confirm("Are you sure you want to remove this request?")) {
+        try {
+            await db.collection("requests").doc(id).delete();
+        } catch (error) {
+            console.error("Error deleting request:", error);
+        }
     }
 }
 

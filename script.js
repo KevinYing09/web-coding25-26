@@ -38,34 +38,53 @@ function showAdminPanel() {
     }
 }
 
-// 3. REPORT FORM LOGIC
+// 3. MOBILE-OPTIMIZED REPORT FORM LOGIC
 const reportForm = document.getElementById('reportForm');
 if (reportForm) {
     reportForm.addEventListener('submit', async (e) => {
         e.preventDefault();
+        
+        const submitBtn = reportForm.querySelector('button[type="submit"]');
         const file = document.getElementById('photoFile').files[0];
-        const category = document.getElementById('itemCategory').value; // Get category
+        const category = document.getElementById('itemCategory').value;
 
-        if (file) {
-            const reader = new FileReader();
-            reader.onload = async (event) => {
+        if (!file) return alert("Please select a photo.");
+
+        // Visual feedback for mobile users (prevents double-tapping)
+        submitBtn.disabled = true;
+        submitBtn.innerText = "Processing Image...";
+
+        const reader = new FileReader();
+        reader.onload = async (event) => {
+            try {
                 const base64Image = event.target.result;
                 
+                // Firestore limit is 1MB. Base64 length check (~1,000,000 chars)
+                if (base64Image.length > 1048487) {
+                    throw new Error("Photo is too high resolution for the database. Try taking a screenshot of the photo and uploading that instead.");
+                }
+
                 await db.collection("items").add({
                     name: document.getElementById('itemName').value,
                     location: document.getElementById('location').value,
-                    category: category, // Save category
+                    category: category,
                     description: document.getElementById('description').value,
                     image: base64Image,
                     status: "pending",
                     timestamp: firebase.firestore.FieldValue.serverTimestamp()
                 });
 
-                alert("Item reported! It will appear after admin approval.");
+                alert("Success! Item reported.");
                 reportForm.reset();
-            };
-            reader.readAsDataURL(file);
-        }
+            } catch (error) {
+                console.error("Mobile Upload Error:", error);
+                alert(error.message);
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.innerText = "Submit Item";
+            }
+        };
+        reader.readAsDataURL(file);
     });
 }
 

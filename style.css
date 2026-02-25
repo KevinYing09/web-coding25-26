@@ -333,7 +333,7 @@ button[onclick^="update"]:hover {
     }
 
     #categoryFilter{
-        width: 80%;
+        width: 100%;
     }
     
     .logo span {

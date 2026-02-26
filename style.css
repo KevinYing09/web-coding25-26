@@ -120,6 +120,35 @@ main { padding: 2rem; max-width: 1200px; margin: auto; }
     border-radius: 10px;
 }
 
+/* 1. Hide the original input */
+input[type="file"] {
+    display: none;
+}
+
+/* 2. Style the label to look like a button */
+.custom-file-upload {
+    display: inline-block;
+    padding: 12px 20px;
+    cursor: pointer;
+    background-color: #3498db;
+    color: white;
+    border-radius: 8px;
+    font-weight: bold;
+    text-align: center;
+    transition: background 0.3s ease;
+    margin-bottom: 10px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.custom-file-upload:hover {
+    background-color: #2980b9;
+}
+
+.file-selected {
+    background-color: #2ecc71 !important;
+}
+
 input, textarea {
     width: 100%;
     padding: 10px;
@@ -130,12 +159,17 @@ input, textarea {
 }
 
 button {
-    background: var(--accent);
+    background-color: #3498db;
     color: white;
     border: none;
     padding: 10px 20px;
     border-radius: 5px;
     cursor: pointer;
+    transition: background 0.3s ease;
+}
+
+button:hover {
+    background-color: #2980b9 !important;
 }
 
 .auth-overlay {
@@ -196,24 +230,26 @@ button[onclick^="delete"] {
     border-radius: 4px;
     cursor: pointer;
     font-size: 12px;
+    transition: background 0.3s ease;
 }
 
 button[onclick^="delete"]:hover {
-    background-color: #c0392b;
+    background-color: #c0392b !important;
 }
 
-button[onclick^="update"] {
-    background-color: #3498db; 
+button[onclick^="approve"] {
+    background-color: #3498db !important; 
     color: white;
     border: none;
     padding: 6px 12px;
     border-radius: 4px;
     cursor: pointer;
     font-size: 12px;
+    transition: background 0.3s ease;
 }
 
-button[onclick^="update"]:hover {
-    background-color: #2980b9;
+button[onclick^="approve"]:hover {
+    background-color: #2980b9 !important
 }
 
 
@@ -332,7 +368,7 @@ button[onclick^="update"]:hover {
         grid-template-columns: 1fr; /* Single column */
     }
 
-    #categoryFilter{
+     #categoryFilter{
         width: 100%;
     }
     

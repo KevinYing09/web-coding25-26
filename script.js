@@ -88,6 +88,19 @@ if (reportForm) {
     });
 }
 
+const fileInput = document.getElementById('photoFile');
+const fileLabel = document.querySelector('.custom-file-upload');
+
+if (fileInput && fileLabel) {
+    fileInput.addEventListener('change', function() {
+        if (this.files && this.files.length > 0) {
+            // Change button text and color when file is picked
+            fileLabel.innerText = this.files[0].name;
+            fileLabel.classList.add('file-selected');
+        }
+    });
+}
+
 // 4. PUBLIC GALLERY LOGIC
 const itemsGrid = document.getElementById('itemsGrid');
 const escapeQuotes = (str) => str.replace(/'/g, "\\'");
@@ -179,7 +192,7 @@ function renderAdminTable() {
                     <td><img src="${item.image}" style="width:50px; height:50px; object-fit:cover; border-radius:4px;"></td>
                     <td><strong>${item.name}</strong></td>
                     <td><span class="type-badge" style="background:#95a5a6;">${itemCategory}</span></td>
-                    <td>${item.status === 'approved' ? '✅ Approved' : '⏳ Pending'}</td>
+                    <td>${item.status === 'approved' ? 'Approved' : 'Pending'}</td>
                     <td>
                         ${item.status === 'pending' ? 
                             `<button onclick="approveItem('${doc.id}')" style="background:#2ecc71; color:white; border:none; padding:5px 10px; border-radius:4px; margin-right:5px;">Approve</button>` 

@@ -38,65 +38,66 @@ function showAdminPanel() {
     }
 }
 
-// 3. MOBILE-OPTIMIZED REPORT FORM LOGIC
+// 3. STORAGE UPLOAD + BUTTON FEEDBACK LOGIC
 const reportForm = document.getElementById('reportForm');
+const fileInput = document.getElementById('photoFile');
+const fileLabel = document.querySelector('.custom-file-upload');
+
+// Update button text when a file is picked (for the styled button)
+if (fileInput && fileLabel) {
+    fileInput.addEventListener('change', function() {
+        if (this.files && this.files.length > 0) {
+            fileLabel.innerText = this.files[0].name;
+            fileLabel.style.backgroundColor = "#2ecc71";
+        }
+    });
+}
+
 if (reportForm) {
     reportForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         
         const submitBtn = reportForm.querySelector('button[type="submit"]');
-        const file = document.getElementById('photoFile').files[0];
+        const file = fileInput.files[0];
         const category = document.getElementById('itemCategory').value;
 
         if (!file) return alert("Please select a photo.");
 
-        // Visual feedback for mobile users (prevents double-tapping)
         submitBtn.disabled = true;
-        submitBtn.innerText = "Processing Image...";
+        submitBtn.innerText = "Uploading to Skyline Cloud...";
 
-        const reader = new FileReader();
-        reader.onload = async (event) => {
-            try {
-                const base64Image = event.target.result;
-                
-                // Firestore limit is 1MB. Base64 length check (~1,000,000 chars)
-                if (base64Image.length > 1048487) {
-                    throw new Error("Photo is too high resolution for the database. Try taking a screenshot of the photo and uploading that instead.");
-                }
+        try {
+            // 1. Upload to Storage
+            const fileName = Date.now() + "_" + file.name;
+            const storageRef = storage.ref('item_images/' + fileName);
+            const snapshot = await storageRef.put(file);
+            
+            // 2. Get the URL
+            const downloadURL = await snapshot.ref.getDownloadURL();
 
-                await db.collection("items").add({
-                    name: document.getElementById('itemName').value,
-                    location: document.getElementById('location').value,
-                    category: category,
-                    description: document.getElementById('description').value,
-                    image: base64Image,
-                    status: "pending",
-                    timestamp: firebase.firestore.FieldValue.serverTimestamp()
-                });
+            // 3. Save to Firestore
+            await db.collection("items").add({
+                name: document.getElementById('itemName').value,
+                location: document.getElementById('location').value,
+                category: category,
+                description: document.getElementById('description').value,
+                image: downloadURL,
+                status: "pending",
+                timestamp: firebase.firestore.FieldValue.serverTimestamp()
+            });
 
-                alert("Success! Item reported.");
-                reportForm.reset();
-            } catch (error) {
-                console.error("Mobile Upload Error:", error);
-                alert(error.message);
-            } finally {
-                submitBtn.disabled = false;
-                submitBtn.innerText = "Submit Item";
-            }
-        };
-        reader.readAsDataURL(file);
-    });
-}
+            alert("Item reported successfully!");
+            reportForm.reset();
+            
+            fileLabel.innerText = "Upload Photo";
+            fileLabel.style.backgroundColor = "#3498db"; 
 
-const fileInput = document.getElementById('photoFile');
-const fileLabel = document.querySelector('.custom-file-upload');
-
-if (fileInput && fileLabel) {
-    fileInput.addEventListener('change', function() {
-        if (this.files && this.files.length > 0) {
-            // Change button text and color when file is picked
-            fileLabel.innerText = this.files[0].name;
-            fileLabel.classList.add('file-selected');
+        } catch (error) {
+            console.error("Upload Error:", error);
+            alert("Error: " + error.message);
+        } finally {
+            submitBtn.disabled = false;
+            submitBtn.innerText = "Submit Item";
         }
     });
 }

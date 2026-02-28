@@ -87,7 +87,7 @@ main { padding: 2rem; max-width: 1200px; margin: auto; }
     background-position: right 10px top 50%;
     background-size: 12px auto;
     
-    padding: 10px 30px 10px 10px; /* Extra padding on the right for our new arrow */
+    padding: 10px 30px 10px 10px;
 }
 
 #searchInput {
@@ -254,6 +254,22 @@ button[onclick^="approve"]:hover {
 
 
 /* Modal Styles */
+#itemModal {
+    display: none; 
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7); /* Darken background */
+    
+    /* These three lines center the modal perfectly */
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+}
+
 .modal-overlay {
     display: none; 
     position: fixed;
@@ -265,19 +281,17 @@ button[onclick^="approve"]:hover {
     padding: 20px;
 }
 
+/* The actual white box */
 .modal-content {
-    background: white;
-    max-width: 800px;
-    width: 90%;
+    background-color: #fff;
+    width: 100%;
+    max-width: 500px; /* Prevents it from being too wide on desktop */
+    max-height: 90vh; /* Prevents it from going off-screen on mobile */
+    overflow-y: auto; /* Adds scroll if text is very long */
     border-radius: 12px;
-    overflow: hidden;
     position: relative;
-    animation: zoomIn 0.3s ease;
-}
-
-@keyframes zoomIn {
-    from { transform: scale(0.8); opacity: 0; }
-    to { transform: scale(1); opacity: 1; }
+    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    animation: modalIn 0.3s ease-out;
 }
 
 .modal-content img {
@@ -289,14 +303,14 @@ button[onclick^="approve"]:hover {
 
 .modal-details { padding: 30px; }
 
-.close-button {
-    position: absolute;
-    top: 15px; right: 20px;
-    font-size: 35px;
-    color: white;
-    cursor: pointer;
-    text-shadow: 0 0 10px rgba(0,0,0,0.5);
-    z-index: 2001;
+.modal-content {
+    position: relative;
+    overflow: visible; /* Allows the button to "sit" slightly off the edge if needed */
+}
+
+@keyframes modalIn {
+    from { transform: translateY(20px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
 }
 
 /* Make cards look clickable */
@@ -311,9 +325,9 @@ button[onclick^="approve"]:hover {
         padding: 10px;
     }
 
-    /* 2. Increase Button and Input size for "Fat Finger" accessibility */
+    /* 2. Increase Button and Input size */
     button, .btn, input, select {
-        padding: 15px !important; /* Larger hit area */
+        padding: 15px !important;
         font-size: 18px !important;
         margin-bottom: 10px;
     }
@@ -375,4 +389,19 @@ button[onclick^="approve"]:hover {
     .logo span {
         font-size: 1.2rem;
     }
+}
+
+/* Accessibility: High-visibility focus rings */
+:focus {
+    outline: 3px solid #3498db;
+    outline-offset: 2px;
+}
+
+/* Ensure color contrast on badges */
+.type-badge {
+    color: #ffffff;
+    background-color: #2c3e50;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 0.85rem;
 }

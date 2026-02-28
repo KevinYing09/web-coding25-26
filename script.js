@@ -1,4 +1,4 @@
-// 1. YOUR FIREBASE CONFIGURATION
+// 1. FIREBASE CONFIGURATION
 const firebaseConfig = {
         apiKey: "AIzaSyBPfaUczJPKQQ-WYpDNWuoDC4h_7TQbzRQ",
         authDomain: "school-lost-and-found-43b02.firebaseapp.com",
@@ -34,7 +34,7 @@ function showAdminPanel() {
         adminContent.style.display = 'block';
         
         renderAdminTable();    // Loads the items
-        renderRequestsTable(); // Loads the student claims (New!)
+        renderRequestsTable(); // Loads the student claims
     }
 }
 
@@ -43,7 +43,6 @@ const reportForm = document.getElementById('reportForm');
 const fileInput = document.getElementById('photoFile');
 const fileLabel = document.querySelector('.custom-file-upload');
 
-// Update button text when a file is picked (for the styled button)
 if (fileInput && fileLabel) {
     fileInput.addEventListener('change', function() {
         if (this.files && this.files.length > 0) {
@@ -109,23 +108,27 @@ const escapeQuotes = (str) => str.replace(/'/g, "\\'");
 db.collection("items")
   .where("status", "==", "approved")
   .onSnapshot((snapshot) => {
-      itemsGrid.innerHTML = '';
-      snapshot.forEach((doc) => {
-          const item = doc.data();
-          const safeName = escapeQuotes(item.name);
-          const safeDesc = escapeQuotes(item.description || "No description provided.");
-
-          // This adds the content back inside the cards
-          itemsGrid.innerHTML += `
-            <div class="card" data-category="${item.category}" onclick="openModal('${item.image}', '${safeName}', '${item.location}', '${safeDesc}', '${doc.id}')">
-                <img src="${item.image}" alt="${item.name}">
+    itemsGrid.innerHTML = '';
+    snapshot.forEach((doc) => {
+        const item = doc.data();
+        const safeName = escapeQuotes(item.name);
+        
+        itemsGrid.innerHTML += `
+            <div class="card" 
+                tabindex="0" 
+                role="button" 
+                aria-label="View details for ${safeName}"
+                data-category="${item.category}" 
+                onclick="openModal('${item.image}', '${safeName}', '${item.location}', '${escapeQuotes(item.description)}', '${doc.id}')"
+                onkeydown="if(event.key === 'Enter') this.click()">
+                <img src="${item.image}" alt="Photo of ${safeName}">
                 <div class="card-content">
                     <h3>${item.name}</h3>
                     <p>📍 ${item.location}</p>
-                    <button onclick="event.stopPropagation(); claimItem('${doc.id}', '${safeName}')">Inquire / Claim</button>
+                    <button aria-label="Inquire about ${safeName}" onclick="event.stopPropagation(); claimItem('${doc.id}', '${safeName}')">Inquire / Claim</button>
                 </div>
             </div>`;
-      });
+    });
   });
 
 // COMBINED SEARCH & CATEGORY FILTER
@@ -168,11 +171,62 @@ function openModal(img, name, loc, desc, id) {
     `;
 
     document.getElementById('itemModal').style.display = 'flex';
+
+    // Accessibility: Move focus to the close button so keyboard users can exit easily
+    setTimeout(() => {
+        document.getElementById('closeModalBtn').focus();
+    }, 100);
 }
+
+function openModal(img, name, loc, desc, id) {
+    const modal = document.getElementById('itemModal');
+    
+    modal.innerHTML = `
+        <div class="modal-content" role="dialog" aria-modal="true" aria-labelledby="modalTitle" aria-describedby="modalDesc">
+            
+            <img src="${img}" alt="Full size image of ${name}" style="width:100%; display:block; border-bottom: 1px solid #eee;">
+            
+            <div class="modal-body" style="padding: 25px; text-align: left;">
+                <h2 id="modalTitle" style="margin-top: 0; color: #2c3e50;">${name}</h2>
+                
+                <p id="modalDesc" style="font-size: 1.1rem; margin-bottom: 10px;">
+                    <strong>📍 Location:</strong> ${loc}<br><br>
+                    ${desc}
+                </p>
+                
+                <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
+                
+                <button id="claim-btn-large" 
+                        aria-label="Inquire or Claim ${name}" 
+                        onclick="claimItem('${id}', '${name}')"
+                        style="width: 100%; padding: 15px; color: white; border: none; border-radius: 8px; font-size: 1.1rem; font-weight: bold; cursor: pointer;">
+                    Inquire / Claim
+                </button>
+            </div>
+        </div>
+    `;
+    
+    // Centers the modal using Flexbox
+    modal.style.display = "flex";
+    setTimeout(() => { document.getElementById('claim-btn-large').focus(); }, 100);
+}
+
 
 function closeModal() {
     document.getElementById('itemModal').style.display = 'none';
 }
+
+// GLOBAL KEYBOARD LISTENER FOR ACCESSIBILITY
+document.addEventListener('keydown', function(event) {
+    // Check if the pressed key is 'Escape'
+    if (event.key === "Escape") {
+        const modal = document.getElementById('itemModal');
+        // Only close if the modal is currently visible
+        if (modal && modal.style.display === "flex") {
+            closeModal();
+        }
+    }
+});
 
 // 5. ADMIN MANAGEMENT LOGIC
 function renderAdminTable() {

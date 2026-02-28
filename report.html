@@ -26,18 +26,18 @@
         <h2>Found Something?</h2>
         <form id="reportForm">
             <label>Item Name</label>
-            <input type="text" id="itemName" required>
+            <input type="text" id="itemName" required aria-required="true" aria-label="Enter the name of the found item">
             
             <label>Location Found</label>
-            <input type="text" id="location" required>
+            <input type="text" id="location" required required aria-required="true" aria-label="Where did you find this item?">
             
-            <label for="photoFile" class="custom-file-upload">
+            <label for="photoFile" class="custom-file-upload" aria-label="Upload a photo of the item">
                 <i class="fa fa-cloud-upload"></i> Upload Photo
             </label>
             <input type="file" id="photoFile" accept="image/*" required>
             
             <label>Category</label>
-            <select id="itemCategory" required style="width: 100%; padding: 10px; margin: 10px 0 20px 0; border: 1px solid #ddd; border-radius: 5px;">
+            <select id="itemCategory" required style="width: 100%; padding: 10px; margin: 10px 0 20px 0; border: 1px solid #ddd; border-radius: 5px;" aria-label="Select item category">
                 <option value="">Select a category</option>
                 <option value="electronics">Electronics</option>
                 <option value="clothing">Clothing</option>
@@ -46,9 +46,9 @@
             </select>
 
             <label>Description</label>
-            <textarea id="description" rows="4"></textarea>
+            <textarea id="description" rows="4" aria-label="Provide additional details about the item"></textarea>
             
-            <button type="submit">Submit Item</button>
+            <button type="submit" aria-label="Submit this report to the admin">Submit Item</button>
         </form>
     </div>
     <script src="script.js"></script>

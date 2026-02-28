@@ -5,9 +5,15 @@
 }
 
 body {
-    font-family: 'Segoe UI', sans-serif;
+    font-family: 'Lato', sans-serif;
+    -webkit-font-smoothing: antialiased; /* Makes font look cleaner on Mac/Mobile */
+    -moz-osx-font-smoothing: grayscale;
     margin: 0;
     background-color: #f4f7f6;
+}
+
+h1, h2, h3 {
+    font-weight: 700;
 }
 
 .title {

@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Claim Item | Skyline Lost & Found</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700&display=swap" rel="stylesheet">
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+</head>
+<body style="font-family: 'Lato', sans-serif;">
+    <nav>
+        <div class="logo"><span>Skyline Lost & Found</span></div>
+        <ul class="navbar">
+            <li><a href="index.html">Back to Gallery</a></li>
+        </ul>
+    </nav>
+
+    <div class="form-container" style="max-width: 600px; margin: 40px auto; padding: 20px;">
+        <div id="itemPreview" style="text-align: center; margin-bottom: 20px;">
+            <p>Loading item details...</p>
+        </div>
+
+        <h2 id="formHeader">Inquire / Claim Item</h2>
+        <form id="claimForm">
+            <label for="studentName">Your Name</label>
+            <input type="text" id="studentName" required aria-label="Your full name">
+
+            <label for="studentContact">Contact Info (Email/Phone)</label>
+            <input type="text" id="studentContact" required aria-label="Your contact information">
+
+            <label>Request Type</label>
+            <div class="radio-group" style="display: flex; gap: 20px; margin-bottom: 20px; padding: 10px 0;">
+                <label style="display: flex; align-items: center; cursor: pointer; font-weight: normal;">
+                    <input type="radio" name="requestType" value="Claim" checked style="margin-right: 8px; width: auto;"> 
+                    <strong>Claim</strong> (I am the owner)
+                </label>
+                <label style="display: flex; align-items: center; cursor: pointer; font-weight: normal;">
+                    <input type="radio" name="requestType" value="Inquiry" style="margin-right: 8px; width: auto;"> 
+                    <strong>Inquiry</strong> (I have a question)
+                </label>
+            </div>
+                        
+            <label for="claimMessage">Message to Admin</label>
+            <textarea id="claimMessage" rows="4" placeholder="Ask a question or provide proof of ownership..." aria-label="Proof of ownership message or question about item"></textarea>
+
+            <button type="submit" id="submitClaim" style=" color: white;">Send Request</button>
+        </form>
+    </div>
+
+    <script src="script.js"></script>
+    <script>
+        // Unique logic for this page only
+        window.onload = loadClaimPage;
+    </script>
+</body>
+</html>

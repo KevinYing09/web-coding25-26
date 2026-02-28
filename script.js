@@ -283,28 +283,69 @@ async function deleteItem(id) {
 
 // 6. CLAIM/INQUIRY LOGIC
 function claimItem(id, name) {
-    const safeName = name.replace(/\\'/g, "'"); 
-    const type = prompt(`Inquiry for: ${safeName}\n\nType "1" to CLAIM this item.\nType "2" to INQUIRE (Ask a question).`);
+    // Redirects to claim.html?id=DOCUMENT_ID
+    window.location.href = `claim.html?id=${id}`;
+}
 
-    if (type === "1" || type === "2") {
-        const studentName = prompt("Please enter your full name:");
-        if (!studentName) return;
+async function loadClaimPage() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const itemId = urlParams.get('id');
 
-        const contactInfo = prompt("Please enter your school email or phone number:");
-        if (!contactInfo) return;
+    if (!itemId) return;
 
-        let studentMessage = "No specific question provided.";
-        if (type === "2") {
-            studentMessage = prompt("What is your question about this item?");
-            if (!studentMessage) studentMessage = "General Inquiry";
+    try {
+        const doc = await db.collection("items").doc(itemId).get();
+        if (doc.exists) {
+            const item = doc.data();
+            document.getElementById('itemPreview').innerHTML = `
+                <img src="${item.image}" style="width: 150px; height: 150px; object-fit: cover; border-radius: 10px; margin-bottom: 10px;">
+                <h3>Claiming: ${item.name}</h3>
+                <p>📍 Found at: ${item.location}</p>
+            `;
+            
+            // Set up the form submission
+            setupClaimSubmission(itemId, item.name);
         }
-
-        const requestLabel = (type === "1") ? "Claim" : "Inquiry";
-
-        saveRequestToFirestore(id, safeName, studentName, contactInfo, requestLabel, studentMessage);
-        
-        alert(type === "1" ? "Claim logged! Visit the Front Office." : "Inquiry sent! Staff will contact you.");
+    } catch (error) {
+        console.error("Error loading item:", error);
     }
+}
+
+function setupClaimSubmission(itemId, itemName) {
+    const form = document.getElementById('claimForm');
+    if (!form) return;
+
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        // Capture the selected radio button value
+        const type = document.querySelector('input[name="requestType"]:checked').value;
+        const btn = document.getElementById('submitClaim');
+        
+        btn.disabled = true;
+        btn.innerText = "Sending Request...";
+
+        try {
+            await db.collection("requests").add({
+                itemId: itemId,
+                itemName: itemName,
+                studentName: document.getElementById('studentName').value,
+                contact: document.getElementById('studentContact').value,
+                type: type, // <--- Saves "Claim" or "Inquiry"
+                message: document.getElementById('claimMessage').value,
+                status: "unread",
+                timestamp: firebase.firestore.FieldValue.serverTimestamp()
+            });
+
+            alert(`Your ${type} has been sent successfully!`);
+            window.location.href = "index.html";
+        } catch (error) {
+            console.error("Submission Error:", error);
+            alert("Error sending request: " + error.message);
+            btn.disabled = false;
+            btn.innerText = "Send Request";
+        }
+    });
 }
 
 // 7. DATABASE HELPER

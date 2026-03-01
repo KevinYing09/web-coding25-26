@@ -322,6 +322,45 @@ button[onclick^="approve"]:hover {
 /* Make cards look clickable */
 .card { cursor: pointer; }
 
+.site-footer {
+    background-color: #2c3e50;
+    color: #ecf0f1;
+    padding: 40px 20px 20px;
+    margin-top: 50px;
+    font-family: 'Lato', sans-serif;
+}
+
+.footer-content {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 30px;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.footer-section h3 {
+    color: #3498db;
+    margin-bottom: 15px;
+    font-size: 1.1rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.footer-section p {
+    line-height: 1.6;
+    font-size: 0.95rem;
+    margin: 5px 0;
+}
+
+.footer-bottom {
+    text-align: center;
+    margin-top: 40px;
+    padding-top: 20px;
+    border-top: 1px solid rgba(255,255,255,0.1);
+    font-size: 0.8rem;
+    color: #bdc3c7;
+}
+
 /* RESPONSIVE MOBILE ADJUSTMENTS */
 @media screen and (max-width: 768px) {
     /* 1. Make the Grid 1 or 2 items per row */
@@ -379,6 +418,10 @@ button[onclick^="approve"]:hover {
     .table-container {
         overflow-x: auto;
         display: block;
+    }
+
+    .footer-content {
+        text-align: center;
     }
 }
 

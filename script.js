@@ -106,30 +106,30 @@ const itemsGrid = document.getElementById('itemsGrid');
 const escapeQuotes = (str) => str.replace(/'/g, "\\'");
 
 db.collection("items")
-  .where("status", "==", "approved")
-  .onSnapshot((snapshot) => {
-    itemsGrid.innerHTML = '';
-    snapshot.forEach((doc) => {
-        const item = doc.data();
-        const safeName = escapeQuotes(item.name);
-        
-        itemsGrid.innerHTML += `
-            <div class="card" 
-                tabindex="0" 
-                role="button" 
-                aria-label="View details for ${safeName}"
-                data-category="${item.category}" 
-                onclick="openModal('${item.image}', '${safeName}', '${item.location}', '${escapeQuotes(item.description)}', '${doc.id}')"
-                onkeydown="if(event.key === 'Enter') this.click()">
-                <img src="${item.image}" alt="Photo of ${safeName}">
-                <div class="card-content">
-                    <h3>${item.name}</h3>
-                    <p>📍 ${item.location}</p>
-                    <button aria-label="Inquire about ${safeName}" onclick="event.stopPropagation(); claimItem('${doc.id}', '${safeName}')">Inquire / Claim</button>
-                </div>
-            </div>`;
-    });
-  });
+.where("status", "==", "approved")
+.onSnapshot((snapshot) => {
+itemsGrid.innerHTML = '';
+snapshot.forEach((doc) => {
+    const item = doc.data();
+    const safeName = escapeQuotes(item.name);
+    
+    itemsGrid.innerHTML += `
+        <div class="card" 
+            tabindex="0" 
+            role="button" 
+            aria-label="View details for ${safeName}"
+            data-category="${item.category}" 
+            onclick="openModal('${item.image}', '${safeName}', '${item.location}', '${escapeQuotes(item.description)}', '${doc.id}')"
+            onkeydown="if(event.key === 'Enter') this.click()">
+            <img src="${item.image}" alt="Photo of ${safeName}">
+            <div class="card-content">
+                <h3>${item.name}</h3>
+                <p>📍 ${item.location}</p>
+                <button aria-label="Inquire about ${safeName}" onclick="event.stopPropagation(); claimItem('${doc.id}', '${safeName}')">Inquire / Claim</button>
+            </div>
+        </div>`;
+});
+});
 
 // COMBINED SEARCH & CATEGORY FILTER
 function applyFilters() {
@@ -159,25 +159,6 @@ if(document.getElementById('searchInput')) {
 }
 
 // Modal Functions
-function openModal(img, name, loc, desc, id) {
-    document.getElementById('modalImage').src = img;
-    document.getElementById('modalName').innerText = name;
-    document.getElementById('modalLocation').innerHTML = `<strong>📍 Location:</strong> ${loc}`;
-    document.getElementById('modalDescription').innerText = desc;
-    
-    // Add a claim button inside the modal too
-    document.getElementById('modalActionArea').innerHTML = `
-        <button style="margin-top:20px; width:100%;" onclick="claimItem('${id}', '${name}')">Inquire / Claim This Item</button>
-    `;
-
-    document.getElementById('itemModal').style.display = 'flex';
-
-    // Accessibility: Move focus to the close button so keyboard users can exit easily
-    setTimeout(() => {
-        document.getElementById('closeModalBtn').focus();
-    }, 100);
-}
-
 function openModal(img, name, loc, desc, id) {
     const modal = document.getElementById('itemModal');
     

@@ -29,9 +29,9 @@
     <main>
         <header>
             <h1>Lost and Found Gallery</h1>
-            <div class="search-container" style="display:flex; gap:10px; align-items:center; flex-wrap:nowrap;">
-                <input type="text" id="searchInput" placeholder="Search for an item…" style="flex:1; min-width:0; margin:0;">
-                <select id="categoryFilter" style="flex-shrink:0; margin:0;">
+            <div class="search-container">
+                <input type="text" id="searchInput" placeholder="Search for an item...">
+                <select id="categoryFilter">
                     <option value="all">All Categories</option>
                     <option value="electronics">Electronics</option>
                     <option value="clothing">Clothing</option>
@@ -42,28 +42,28 @@
                         onclick="toggleAIPanel()"
                         aria-expanded="false"
                         aria-controls="aiSearchPanel"
-                        style="background:#8e44ad; white-space:nowrap; flex-shrink:0; height:40px; padding:0 16px; margin:0;">
+                        class="btn-ai-toggle">
                     <i class="fa fa-magic"></i> Describe to Find
                 </button>
             </div>
 
             <!-- AI Similarity Search Panel -->
-            <div id="aiSearchPanel" style="display:none; margin-top:14px; background:white; border:2px solid #8e44ad; border-radius:10px; padding:18px; box-shadow:0 4px 12px rgba(142,68,173,0.15);">
-                <label for="aiDescInput" style="font-weight:700; color:#2c3e50; display:block; margin-bottom:8px;">
+            <div id="aiSearchPanel" class="ai-panel">
+                <label for="aiDescInput" class="ai-panel-label">
                     Describe your lost item in detail:
                 </label>
-                <div style="display:flex; gap:10px; align-items:flex-start; flex-wrap:wrap;">
+                <div class="ai-panel-row">
                     <textarea id="aiDescInput"
                               rows="2"
-                              placeholder="e.g. black Nike hoodie size medium, or blue water bottle with stickers on it…"
-                              style="flex:1; min-width:200px; margin:0; resize:vertical;"
+                              placeholder="e.g. black Nike hoodie size medium, or blue water bottle with stickers on it..."
+                              class="ai-textarea"
                               onkeydown="if(event.key==='Enter' && !event.shiftKey){ event.preventDefault(); findAIMatches(); }"></textarea>
-                    <div style="display:flex; flex-direction:column; gap:6px;">
-                        <button id="aiFindBtn" onclick="findAIMatches()" style="background:#8e44ad; white-space:nowrap;">Find Matches</button>
-                        <button onclick="clearAISearch()" style="background:#95a5a6; white-space:nowrap; font-size:0.85rem; padding:6px 12px;">Clear</button>
+                    <div class="ai-panel-buttons">
+                        <button id="aiFindBtn" onclick="findAIMatches()" class="btn-ai-find">Find Matches</button>
+                        <button onclick="clearAISearch()" class="btn-ai-clear">Clear</button>
                     </div>
                 </div>
-                <div id="aiResults" style="margin-top:10px; font-size:0.9rem;"></div>
+                <div id="aiResults" class="ai-results"></div>
             </div>
         </header>
 

@@ -1,400 +1,690 @@
-// 1. FIREBASE CONFIGURATION
+// ─── 1. FIREBASE CONFIGURATION ──────────────────────────────────────────────
 const firebaseConfig = {
-        apiKey: "AIzaSyBPfaUczJPKQQ-WYpDNWuoDC4h_7TQbzRQ",
-        authDomain: "school-lost-and-found-43b02.firebaseapp.com",
-        projectId: "school-lost-and-found-43b02",
-        storageBucket: "school-lost-and-found-43b02.firebasestorage.app",
-        messagingSenderId: "511480295301",
-        appId: "1:511480295301:web:e397b7537f9e7ad06b5eec"
+    apiKey: "AIzaSyBPfaUczJPKQQ-WYpDNWuoDC4h_7TQbzRQ",
+    authDomain: "school-lost-and-found-43b02.firebaseapp.com",
+    projectId: "school-lost-and-found-43b02",
+    storageBucket: "school-lost-and-found-43b02.firebasestorage.app",
+    messagingSenderId: "511480295301",
+    appId: "1:511480295301:web:e397b7537f9e7ad06b5eec"
 };
 
-// Initialize Firebase
 firebase.initializeApp(firebaseConfig);
-const db = firebase.firestore();
+const db      = firebase.firestore();
 const storage = firebase.storage();
 
-// 2. ADMIN SECURITY LOGIC
-const ADMIN_PASSWORD = "schooladmin123"; 
-
+// ─── 2. ADMIN SECURITY — Firebase Auth ──────────────────────────────────────
 function checkAdminPass() {
-    const pass = document.getElementById('adminPass').value;
-    if (pass === ADMIN_PASSWORD) {
-        sessionStorage.setItem('isAdmin', 'true');
-        showAdminPanel();
-    } else {
-        document.getElementById('loginError').style.display = 'block';
-    }
+    const email = document.getElementById('adminEmail').value.trim();
+    const pass  = document.getElementById('adminPass').value;
+
+    firebase.auth().signInWithEmailAndPassword(email, pass)
+        .then(() => {
+            sessionStorage.setItem('isAdmin', 'true');
+            showAdminPanel();
+        })
+        .catch(() => {
+            document.getElementById('loginError').style.display = 'block';
+        });
 }
 
 function showAdminPanel() {
-    const authOverlay = document.getElementById('adminAuth');
+    const authOverlay  = document.getElementById('adminAuth');
     const adminContent = document.getElementById('adminContent');
     if (authOverlay && adminContent) {
-        authOverlay.style.display = 'none';
+        authOverlay.style.display  = 'none';
         adminContent.style.display = 'block';
-        
-        renderAdminTable();    // Loads the items
-        renderRequestsTable(); // Loads the student claims
+        renderAdminTable();
+        renderRequestsTable();
     }
 }
 
-// 3. STORAGE UPLOAD + BUTTON FEEDBACK LOGIC
-const reportForm = document.getElementById('reportForm');
-const fileInput = document.getElementById('photoFile');
-const fileLabel = document.querySelector('.custom-file-upload');
+// ─── 3. REPORT FORM — multi-photo upload (up to 5) ──────────────────────────
+const reportForm  = document.getElementById('reportForm');
+const fileInput   = document.getElementById('photoFile');
+const fileLabel   = document.querySelector('.custom-file-upload');
+const previewGrid = document.getElementById('photoPreviewGrid');
 
-if (fileInput && fileLabel) {
-    fileInput.addEventListener('change', function() {
-        if (this.files && this.files.length > 0) {
-            fileLabel.innerText = this.files[0].name;
-            fileLabel.style.backgroundColor = "#2ecc71";
+// Tracks the selected File objects so we can upload them all on submit
+let selectedFiles = [];
+
+if (fileInput) {
+    fileInput.addEventListener('change', function () {
+        const newFiles  = Array.from(this.files);
+        const combined  = [...selectedFiles, ...newFiles];
+        const MAX       = 5;
+
+        if (combined.length > MAX) {
+            alert('You can upload a maximum of ' + MAX + ' photos.');
+            selectedFiles = combined.slice(0, MAX);
+        } else {
+            selectedFiles = combined;
         }
+
+        // Reset the input so the same file can be re-added after removal
+        fileInput.value = '';
+
+        updateFileLabel();
+        renderPhotoPreviews();
+    });
+}
+
+function updateFileLabel() {
+    if (!fileLabel) return;
+    if (selectedFiles.length === 0) {
+        fileLabel.textContent           = '📷 Upload Photos (up to 5)';
+        fileLabel.style.backgroundColor = '#3498db';
+    } else {
+        fileLabel.textContent           = selectedFiles.length + ' photo' + (selectedFiles.length > 1 ? 's' : '') + ' selected — add more?';
+        fileLabel.style.backgroundColor = '#2ecc71';
+    }
+}
+
+function renderPhotoPreviews() {
+    if (!previewGrid) return;
+    previewGrid.innerHTML = '';
+
+    selectedFiles.forEach((file, index) => {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const wrapper = document.createElement('div');
+            wrapper.style.cssText = 'position:relative; display:inline-block;';
+
+            const img = document.createElement('img');
+            img.src   = e.target.result;
+            img.style.cssText = 'width:80px; height:80px; object-fit:cover; border-radius:6px; border:2px solid #ddd;';
+
+            const removeBtn = document.createElement('button');
+            removeBtn.textContent = '✕';
+            removeBtn.type        = 'button';
+            removeBtn.setAttribute('aria-label', 'Remove photo ' + (index + 1));
+            removeBtn.style.cssText = 'position:absolute; top:-6px; right:-6px; width:20px; height:20px; border-radius:50%; background:#e74c3c; color:white; border:none; font-size:10px; cursor:pointer; padding:0; line-height:20px; text-align:center;';
+            removeBtn.addEventListener('click', () => {
+                selectedFiles.splice(index, 1);
+                updateFileLabel();
+                renderPhotoPreviews();
+            });
+
+            wrapper.append(img, removeBtn);
+            previewGrid.appendChild(wrapper);
+        };
+        reader.readAsDataURL(file);
     });
 }
 
 if (reportForm) {
     reportForm.addEventListener('submit', async (e) => {
         e.preventDefault();
-        
+
+        if (selectedFiles.length === 0) return alert('Please select at least one photo.');
+
         const submitBtn = reportForm.querySelector('button[type="submit"]');
-        const file = fileInput.files[0];
-        const category = document.getElementById('itemCategory').value;
-
-        if (!file) return alert("Please select a photo.");
-
-        submitBtn.disabled = true;
-        submitBtn.innerText = "Uploading to Skyline Cloud...";
+        submitBtn.disabled    = true;
+        submitBtn.textContent = 'Uploading…';
 
         try {
-            // 1. Upload to Storage
-            const fileName = Date.now() + "_" + file.name;
-            const storageRef = storage.ref('item_images/' + fileName);
-            const snapshot = await storageRef.put(file);
-            
-            // 2. Get the URL
-            const downloadURL = await snapshot.ref.getDownloadURL();
-
-            // 3. Save to Firestore
-            await db.collection("items").add({
-                name: document.getElementById('itemName').value,
-                location: document.getElementById('location').value,
-                category: category,
-                description: document.getElementById('description').value,
-                image: downloadURL,
-                status: "pending",
-                timestamp: firebase.firestore.FieldValue.serverTimestamp()
+            // Upload all photos in parallel
+            const uploadPromises = selectedFiles.map(async (file) => {
+                const fileName   = Date.now() + '_' + Math.random().toString(36).slice(2) + '_' + file.name;
+                const storageRef = storage.ref('item_images/' + fileName);
+                const snapshot   = await storageRef.put(file);
+                return snapshot.ref.getDownloadURL();
             });
 
-            alert("Item reported successfully!");
+            const imageURLs = await Promise.all(uploadPromises);
+
+            await db.collection('items').add({
+                name:        document.getElementById('itemName').value,
+                location:    document.getElementById('location').value,
+                category:    document.getElementById('itemCategory').value,
+                description: document.getElementById('description').value,
+                // Keep legacy `image` field (first photo) so old records still work
+                image:       imageURLs[0],
+                images:      imageURLs,
+                status:      'pending',
+                timestamp:   firebase.firestore.FieldValue.serverTimestamp()
+            });
+
+            alert('Item reported successfully!');
             reportForm.reset();
-            
-            fileLabel.innerText = "Upload Photo";
-            fileLabel.style.backgroundColor = "#3498db"; 
+            selectedFiles = [];
+            updateFileLabel();
+            renderPhotoPreviews();
 
         } catch (error) {
-            console.error("Upload Error:", error);
-            alert("Error: " + error.message);
+            console.error('Upload Error:', error);
+            alert('Error: ' + error.message);
         } finally {
-            submitBtn.disabled = false;
-            submitBtn.innerText = "Submit Item";
+            submitBtn.disabled    = false;
+            submitBtn.textContent = 'Submit Item';
         }
     });
 }
 
-// 4. PUBLIC GALLERY LOGIC
+// ─── 4. PUBLIC GALLERY ──────────────────────────────────────────────────────
 const itemsGrid = document.getElementById('itemsGrid');
-const escapeQuotes = (str) => str.replace(/'/g, "\\'");
 
-db.collection("items")
-.where("status", "==", "approved")
-.onSnapshot((snapshot) => {
-itemsGrid.innerHTML = '';
-snapshot.forEach((doc) => {
-    const item = doc.data();
-    const safeName = escapeQuotes(item.name);
-    
-    itemsGrid.innerHTML += `
-        <div class="card" 
-            tabindex="0" 
-            role="button" 
-            aria-label="View details for ${safeName}"
-            data-category="${item.category}" 
-            onclick="openModal('${item.image}', '${safeName}', '${item.location}', '${escapeQuotes(item.description)}', '${doc.id}')"
-            onkeydown="if(event.key === 'Enter') this.click()">
-            <img src="${item.image}" alt="Photo of ${safeName}">
-            <div class="card-content">
-                <h3>${item.name}</h3>
-                <p>📍 ${item.location}</p>
-                <button aria-label="Inquire about ${safeName}" onclick="event.stopPropagation(); claimItem('${doc.id}', '${safeName}')">Inquire / Claim</button>
-            </div>
-        </div>`;
-});
-});
+if (itemsGrid) {
+    db.collection('items')
+      .where('status', '==', 'approved')
+      .onSnapshot((snapshot) => {
+          itemsGrid.innerHTML = '';
 
-// COMBINED SEARCH & CATEGORY FILTER
+          if (snapshot.empty) {
+              itemsGrid.innerHTML = '<p style="grid-column:1/-1; text-align:center; color:#888; padding:40px 0;">No items found yet. Check back soon!</p>';
+              return;
+          }
+
+          snapshot.forEach((doc) => {
+              const item   = doc.data();
+              // Support both multi-image and legacy single-image records
+              const images = item.images && item.images.length ? item.images : [item.image];
+
+              const card = document.createElement('div');
+              card.className = 'card';
+              card.tabIndex  = 0;
+              card.setAttribute('role', 'button');
+              card.setAttribute('aria-label', 'View details for ' + item.name);
+              card.dataset.category = item.category;
+
+              // Show first photo on the card; badge shows count if >1
+              const imgWrapper = document.createElement('div');
+              imgWrapper.style.cssText = 'position:relative; overflow:hidden;';
+
+              const img = document.createElement('img');
+              img.src = images[0];
+              img.alt = 'Photo of ' + item.name;
+
+              if (images.length > 1) {
+                  const badge = document.createElement('span');
+                  badge.textContent = '📷 ' + images.length;
+                  badge.style.cssText = 'position:absolute; bottom:8px; right:8px; background:rgba(0,0,0,0.6); color:white; border-radius:12px; padding:2px 8px; font-size:0.8rem; pointer-events:none;';
+                  imgWrapper.append(img, badge);
+              } else {
+                  imgWrapper.appendChild(img);
+              }
+
+              const cardContent = document.createElement('div');
+              cardContent.className = 'card-content';
+
+              const h3 = document.createElement('h3');
+              h3.textContent = item.name;
+
+              const loc = document.createElement('p');
+              loc.textContent = '📍 ' + item.location;
+
+              const btn = document.createElement('button');
+              btn.textContent = 'Inquire / Claim';
+              btn.setAttribute('aria-label', 'Inquire about ' + item.name);
+              btn.addEventListener('click', (ev) => { ev.stopPropagation(); claimItem(doc.id); });
+
+              cardContent.append(h3, loc, btn);
+              card.append(imgWrapper, cardContent);
+
+              card.addEventListener('click', () => openModal(images, item.name, item.location, item.description, doc.id));
+              card.addEventListener('keydown', (ev) => { if (ev.key === 'Enter') card.click(); });
+
+              itemsGrid.appendChild(card);
+          });
+      });
+}
+
+// ─── SEARCH & CATEGORY FILTER ───────────────────────────────────────────────
 function applyFilters() {
-    const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+    const searchTerm       = document.getElementById('searchInput').value.toLowerCase();
     const selectedCategory = document.getElementById('categoryFilter').value;
-    const cards = document.querySelectorAll('.card');
-
-    cards.forEach(card => {
-        const itemName = card.querySelector('h3').innerText.toLowerCase();
-        const itemCategory = card.getAttribute('data-category');
-
-        const matchesSearch = itemName.includes(searchTerm);
-        const matchesCategory = (selectedCategory === "all" || itemCategory === selectedCategory);
-
-        if (matchesSearch && matchesCategory) {
-            card.style.display = "block";
-        } else {
-            card.style.display = "none";
-        }
+    document.querySelectorAll('.card').forEach(card => {
+        const itemName        = card.querySelector('h3').textContent.toLowerCase();
+        const itemCategory    = card.dataset.category;
+        const matchesSearch   = itemName.includes(searchTerm);
+        const matchesCategory = (selectedCategory === 'all' || itemCategory === selectedCategory);
+        card.style.display    = (matchesSearch && matchesCategory) ? 'block' : 'none';
     });
 }
 
-// Add listeners to both inputs
-if(document.getElementById('searchInput')) {
+if (document.getElementById('searchInput')) {
     document.getElementById('searchInput').addEventListener('input', applyFilters);
     document.getElementById('categoryFilter').addEventListener('change', applyFilters);
 }
 
-// Modal Functions
-function openModal(img, name, loc, desc, id) {
+// ─── MODAL with photo carousel ───────────────────────────────────────────────
+function openModal(images, name, loc, desc, id) {
+    if (!Array.isArray(images)) images = [images]; // backwards compat
     const modal = document.getElementById('itemModal');
-    
-    modal.innerHTML = `
-        <div class="modal-content" role="dialog" aria-modal="true" aria-labelledby="modalTitle" aria-describedby="modalDesc">
-            
-            <img src="${img}" alt="Full size image of ${name}" style="width:100%; display:block; border-bottom: 1px solid #eee;">
-            
-            <div class="modal-body" style="padding: 25px; text-align: left;">
-                <h2 id="modalTitle" style="margin-top: 0; color: #2c3e50;">${name}</h2>
-                
-                <p id="modalDesc" style="font-size: 1.1rem; margin-bottom: 10px;">
-                    <strong>📍 Location:</strong> ${loc}<br><br>
-                    ${desc}
-                </p>
-                
-                <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
-                
-                <button id="claim-btn-large" 
-                        aria-label="Inquire or Claim ${name}" 
-                        onclick="claimItem('${id}', '${name}')"
-                        style="width: 100%; padding: 15px; color: white; border: none; border-radius: 8px; font-size: 1.1rem; font-weight: bold; cursor: pointer;">
-                    Inquire / Claim
-                </button>
-            </div>
-        </div>
-    `;
-    
-    // Centers the modal using Flexbox
-    modal.style.display = "flex";
-    setTimeout(() => { document.getElementById('claim-btn-large').focus(); }, 100);
-}
+    modal.innerHTML = '';
 
+    let currentIndex = 0;
+
+    const content = document.createElement('div');
+    content.className = 'modal-content';
+    content.setAttribute('role', 'dialog');
+    content.setAttribute('aria-modal', 'true');
+    content.setAttribute('aria-labelledby', 'modalTitle');
+    content.addEventListener('click', (e) => e.stopPropagation());
+
+    // ── Carousel ──────────────────────────────────────────────────
+    // role="region" + aria-label lets screen readers announce "Photo carousel"
+    const carouselWrapper = document.createElement('div');
+    carouselWrapper.setAttribute('role', 'region');
+    carouselWrapper.setAttribute('aria-label', 'Photo carousel');
+    carouselWrapper.style.cssText = 'position:relative; background:#000; overflow:hidden;';
+
+    const mainImg = document.createElement('img');
+    mainImg.src   = images[0];
+    mainImg.alt   = 'Photo 1 of ' + images.length + ' for ' + name;
+    mainImg.style.cssText = 'width:100%; max-height:350px; object-fit:contain; display:block; transition:opacity 0.2s ease;';
+
+    // Live region so screen readers announce photo changes
+    const srAnnounce = document.createElement('span');
+    srAnnounce.setAttribute('aria-live', 'polite');
+    srAnnounce.setAttribute('aria-atomic', 'true');
+    srAnnounce.style.cssText = 'position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap;';
+
+    carouselWrapper.append(mainImg, srAnnounce);
+
+    if (images.length > 1) {
+        const counterBadge = document.createElement('span');
+        counterBadge.style.cssText = 'position:absolute; top:10px; right:10px; background:rgba(0,0,0,0.6); color:white; border-radius:12px; padding:3px 10px; font-size:0.85rem; pointer-events:none;';
+        counterBadge.setAttribute('aria-hidden', 'true'); // screen reader uses srAnnounce instead
+        counterBadge.textContent = '1 / ' + images.length;
+
+        // Arrow button shared styles — use flexbox to perfectly centre the glyph,
+        // and override the global :focus outline so it sits flush on the circle.
+        const arrowStyle = [
+            'position:absolute',
+            'top:50%',
+            'transform:translateY(-50%)',
+            'background:rgba(0,0,0,0.55)',
+            'color:white',
+            'border:none',
+            'border-radius:50%',
+            'width:36px',
+            'height:36px',
+            'display:flex',
+            'align-items:center',
+            'justify-content:center',
+            'font-size:1.5rem',
+            'line-height:1',
+            'cursor:pointer',
+            'outline-offset:3px',  // keeps the focus ring tight around the circle
+            'transition:background 0.2s',
+        ].join(';');
+
+        const prevBtn = document.createElement('button');
+        prevBtn.innerHTML = '&#8249;';
+        prevBtn.setAttribute('aria-label', 'Previous photo');
+        prevBtn.setAttribute('type', 'button');
+        prevBtn.style.cssText = arrowStyle + ';left:8px;';
+
+        const nextBtn = document.createElement('button');
+        nextBtn.innerHTML = '&#8250;';
+        nextBtn.setAttribute('aria-label', 'Next photo');
+        nextBtn.setAttribute('type', 'button');
+        nextBtn.style.cssText = arrowStyle + ';right:8px;';
+
+        // Thumbnail strip — built first so goTo() can reference it
+        const thumbStrip = document.createElement('div');
+        thumbStrip.setAttribute('role', 'tablist');
+        thumbStrip.setAttribute('aria-label', 'Photo thumbnails');
+        thumbStrip.style.cssText = 'display:flex; gap:6px; padding:8px; background:#111; overflow-x:auto; justify-content:center;';
+
+        function goTo(index) {
+            currentIndex = (index + images.length) % images.length;
+            mainImg.style.opacity = '0';
+            setTimeout(() => {
+                mainImg.src = images[currentIndex];
+                mainImg.alt = 'Photo ' + (currentIndex + 1) + ' of ' + images.length + ' for ' + name;
+                mainImg.style.opacity = '1';
+                counterBadge.textContent = (currentIndex + 1) + ' / ' + images.length;
+                srAnnounce.textContent   = 'Photo ' + (currentIndex + 1) + ' of ' + images.length;
+                // Update thumbnail highlight + ARIA
+                thumbStrip.querySelectorAll('button').forEach((t, i) => {
+                    const isActive = i === currentIndex;
+                    t.setAttribute('aria-selected', String(isActive));
+                    t.style.outline = isActive ? '2px solid #3498db' : 'none';
+                    t.querySelector('img').style.opacity = isActive ? '1' : '0.55';
+                });
+            }, 150);
+        }
+
+        prevBtn.addEventListener('click', () => goTo(currentIndex - 1));
+        nextBtn.addEventListener('click', () => goTo(currentIndex + 1));
+
+        // Build thumbnails as focusable buttons (not bare imgs) for keyboard access
+        images.forEach((url, i) => {
+            const thumbBtn = document.createElement('button');
+            thumbBtn.setAttribute('role', 'tab');
+            thumbBtn.setAttribute('aria-label', 'View photo ' + (i + 1));
+            thumbBtn.setAttribute('aria-selected', i === 0 ? 'true' : 'false');
+            thumbBtn.setAttribute('type', 'button');
+            thumbBtn.style.cssText = [
+                'background:none',
+                'border:none',
+                'padding:0',
+                'cursor:pointer',
+                'border-radius:4px',
+                'flex-shrink:0',
+                'outline:' + (i === 0 ? '2px solid #3498db' : 'none'),
+                'outline-offset:2px',
+            ].join(';');
+
+            const thumb = document.createElement('img');
+            thumb.src   = url;
+            thumb.alt   = '';          // decorative — button label covers it
+            thumb.style.cssText = 'width:50px; height:50px; object-fit:cover; border-radius:4px; display:block; opacity:' + (i === 0 ? '1' : '0.55') + ';';
+
+            thumbBtn.appendChild(thumb);
+            thumbBtn.addEventListener('click', () => goTo(i));
+            thumbStrip.appendChild(thumbBtn);
+        });
+
+        carouselWrapper.append(prevBtn, nextBtn, counterBadge);
+        content.append(carouselWrapper, thumbStrip);
+
+        // ── Keyboard: Left/Right arrows navigate carousel while modal is open ──
+        content.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowLeft')  { e.preventDefault(); goTo(currentIndex - 1); }
+            if (e.key === 'ArrowRight') { e.preventDefault(); goTo(currentIndex + 1); }
+        });
+
+    } else {
+        content.appendChild(carouselWrapper);
+    }
+
+    // ── Details ───────────────────────────────────────────────────
+    const body = document.createElement('div');
+    body.style.cssText = 'padding:25px; text-align:left;';
+
+    const title = document.createElement('h2');
+    title.id          = 'modalTitle';
+    title.textContent = name;
+    title.style.cssText = 'margin-top:0; color:#2c3e50;';
+
+    const details = document.createElement('p');
+    const locStrong = document.createElement('strong');
+    locStrong.textContent = '📍 Location: ';
+    details.append(locStrong, document.createTextNode(loc), document.createElement('br'), document.createElement('br'), document.createTextNode(desc || ''));
+
+    const hr = document.createElement('hr');
+    hr.style.cssText = 'border:0; border-top:1px solid #eee; margin:20px 0;';
+
+    const claimBtn = document.createElement('button');
+    claimBtn.id          = 'claim-btn-large';
+    claimBtn.textContent = 'Inquire / Claim';
+    claimBtn.setAttribute('aria-label', 'Inquire or Claim ' + name);
+    claimBtn.style.cssText = 'width:100%; padding:15px; color:white; border:none; border-radius:8px; font-size:1.1rem; font-weight:bold; cursor:pointer;';
+    claimBtn.addEventListener('click', () => claimItem(id));
+
+    const closeBtn = document.createElement('button');
+    closeBtn.textContent = '✕ Close';
+    closeBtn.setAttribute('aria-label', 'Close modal');
+    closeBtn.style.cssText = 'width:100%; padding:10px; margin-top:10px; background:#95a5a6; color:white; border:none; border-radius:8px; font-size:1rem; cursor:pointer;';
+    closeBtn.addEventListener('click', closeModal);
+
+    body.append(title, details, hr, claimBtn, closeBtn);
+    content.appendChild(body);
+    modal.appendChild(content);
+
+    modal.style.display = 'flex';
+
+    // Focus the first interactive element — the claim button (or prev arrow if
+    // the user is clearly navigating by keyboard, but claim is the primary action)
+    setTimeout(() => claimBtn.focus(), 100);
+}
 
 function closeModal() {
-    document.getElementById('itemModal').style.display = 'none';
+    const modal = document.getElementById('itemModal');
+    if (modal) modal.style.display = 'none';
 }
 
-// GLOBAL KEYBOARD LISTENER FOR ACCESSIBILITY
-document.addEventListener('keydown', function(event) {
-    // Check if the pressed key is 'Escape'
-    if (event.key === "Escape") {
+document.addEventListener('click', (e) => {
+    const modal = document.getElementById('itemModal');
+    if (modal && e.target === modal) closeModal();
+});
+
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
         const modal = document.getElementById('itemModal');
-        // Only close if the modal is currently visible
-        if (modal && modal.style.display === "flex") {
-            closeModal();
-        }
+        if (modal && modal.style.display === 'flex') closeModal();
     }
 });
 
-// 5. ADMIN MANAGEMENT LOGIC
+// ─── 5. ADMIN MANAGEMENT ────────────────────────────────────────────────────
 function renderAdminTable() {
     const adminTable = document.getElementById('adminTable');
     if (!adminTable) return;
 
-    db.collection("items").orderBy("timestamp", "desc").onSnapshot((snapshot) => {
+    db.collection('items').orderBy('timestamp', 'desc').onSnapshot((snapshot) => {
         adminTable.innerHTML = '';
         snapshot.forEach((doc) => {
-            const item = doc.data();
-            const safeName = item.name.replace(/'/g, "\\'");
-            
-            // Provide a fallback if category is missing
-            const itemCategory = item.category || "Uncategorized";
+            const item         = doc.data();
+            const itemCategory = item.category || 'Uncategorized';
+            const images       = item.images && item.images.length ? item.images : [item.image];
 
-            adminTable.innerHTML += `
-                <tr style="border-bottom: 1px solid #eee;">
-                    <td><img src="${item.image}" style="width:50px; height:50px; object-fit:cover; border-radius:4px;"></td>
-                    <td><strong>${item.name}</strong></td>
-                    <td><span class="type-badge" style="background:#95a5a6;">${itemCategory}</span></td>
-                    <td>${item.status === 'approved' ? 'Approved' : 'Pending'}</td>
-                    <td>
-                        ${item.status === 'pending' ? 
-                            `<button onclick="approveItem('${doc.id}')" style="background:#2ecc71; color:white; border:none; padding:5px 10px; border-radius:4px; margin-right:5px;">Approve</button>` 
-                            : ''}
-                        <button onclick="deleteItem('${doc.id}')" style="background:#e74c3c; color:white; border:none; padding:5px 10px; border-radius:4px;">Delete</button>
-                    </td>
-                </tr>`;
+            const tr = document.createElement('tr');
+            tr.style.borderBottom = '1px solid #eee';
+
+            // Photo thumbnail strip (up to 3 shown)
+            const tdImg = document.createElement('td');
+            const thumbRow = document.createElement('div');
+            thumbRow.style.cssText = 'display:flex; gap:4px; align-items:center;';
+            images.slice(0, 3).forEach((url, i) => {
+                const img = document.createElement('img');
+                img.src   = url;
+                img.style.cssText = 'width:44px; height:44px; object-fit:cover; border-radius:4px;';
+                thumbRow.appendChild(img);
+            });
+            if (images.length > 3) {
+                const more = document.createElement('span');
+                more.textContent  = '+' + (images.length - 3);
+                more.style.cssText = 'font-size:0.8rem; color:#888;';
+                thumbRow.appendChild(more);
+            }
+            tdImg.appendChild(thumbRow);
+
+            // Name
+            const tdName = document.createElement('td');
+            const strong = document.createElement('strong');
+            strong.textContent = item.name;
+            tdName.appendChild(strong);
+
+            // Category
+            const tdCat = document.createElement('td');
+            const badge = document.createElement('span');
+            badge.className        = 'type-badge';
+            badge.textContent      = itemCategory;
+            badge.style.background = '#95a5a6';
+            tdCat.appendChild(badge);
+
+            // Status
+            const tdStatus = document.createElement('td');
+            tdStatus.textContent = item.status === 'approved' ? 'Approved' : 'Pending';
+
+            // Actions
+            const tdActions = document.createElement('td');
+            if (item.status === 'pending') {
+                const approveBtn = document.createElement('button');
+                approveBtn.textContent = 'Approve';
+                approveBtn.style.cssText = 'background:#2ecc71; color:white; border:none; padding:5px 10px; border-radius:4px; margin-right:5px; cursor:pointer;';
+                approveBtn.addEventListener('click', () => approveItem(doc.id));
+                tdActions.appendChild(approveBtn);
+            }
+            const deleteBtn = document.createElement('button');
+            deleteBtn.textContent = 'Delete';
+            deleteBtn.style.cssText = 'background:#e74c3c; color:white; border:none; padding:5px 10px; border-radius:4px; cursor:pointer;';
+            deleteBtn.addEventListener('click', () => deleteItem(doc.id));
+            tdActions.appendChild(deleteBtn);
+
+            tr.append(tdImg, tdName, tdCat, tdStatus, tdActions);
+            adminTable.appendChild(tr);
         });
     });
-}
-
-async function updateStatus(id, newStatus) {
-    await db.collection("items").doc(id).update({ status: newStatus });
 }
 
 async function approveItem(id) {
     try {
-        await db.collection("items").doc(id).update({
-            status: "approved"
-        });
-        alert("Item approved and added to the public gallery!");
+        await db.collection('items').doc(id).update({ status: 'approved' });
+        alert('Item approved and added to the public gallery!');
     } catch (error) {
-        console.error("Error approving item: ", error);
-        alert("Failed to approve item. Check the console for errors.");
+        console.error('Error approving item:', error);
+        alert('Failed to approve item.');
     }
 }
 
 async function deleteItem(id) {
-    if(confirm("Are you sure you want to remove this listing?")) {
-        await db.collection("items").doc(id).delete();
+    if (confirm('Are you sure you want to remove this listing?')) {
+        await db.collection('items').doc(id).delete();
     }
 }
 
-// 6. CLAIM/INQUIRY LOGIC
-function claimItem(id, name) {
-    // Redirects to claim.html?id=DOCUMENT_ID
-    window.location.href = `claim.html?id=${id}`;
+// ─── 6. CLAIM / INQUIRY ─────────────────────────────────────────────────────
+function claimItem(id) {
+    window.location.href = 'claim.html?id=' + id;
 }
 
 async function loadClaimPage() {
     const urlParams = new URLSearchParams(window.location.search);
-    const itemId = urlParams.get('id');
-
+    const itemId    = urlParams.get('id');
     if (!itemId) return;
 
     try {
-        const doc = await db.collection("items").doc(itemId).get();
+        const doc = await db.collection('items').doc(itemId).get();
         if (doc.exists) {
-            const item = doc.data();
-            document.getElementById('itemPreview').innerHTML = `
-                <img src="${item.image}" style="width: 150px; height: 150px; object-fit: cover; border-radius: 10px; margin-bottom: 10px;">
-                <h3>Claiming: ${item.name}</h3>
-                <p>📍 Found at: ${item.location}</p>
-            `;
-            
-            // Set up the form submission
+            const item    = doc.data();
+            const images  = item.images && item.images.length ? item.images : [item.image];
+            const preview = document.getElementById('itemPreview');
+
+            const img = document.createElement('img');
+            img.src = images[0];
+            img.style.cssText = 'width:150px; height:150px; object-fit:cover; border-radius:10px; margin-bottom:10px;';
+
+            const h3 = document.createElement('h3');
+            h3.textContent = 'Claiming: ' + item.name;
+
+            const p = document.createElement('p');
+            p.textContent = '📍 Found at: ' + item.location;
+
+            preview.innerHTML = '';
+            preview.append(img, h3, p);
+
             setupClaimSubmission(itemId, item.name);
         }
     } catch (error) {
-        console.error("Error loading item:", error);
+        console.error('Error loading item:', error);
     }
 }
 
 function setupClaimSubmission(itemId, itemName) {
-    const form = document.getElementById('claimForm');
-    if (!form) return;
+    const btn = document.getElementById('submitClaim');
+    if (!btn) return;
 
-    form.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        
-        // Capture the selected radio button value
+    btn.addEventListener('click', async () => {
+        const name    = document.getElementById('studentName').value.trim();
+        const contact = document.getElementById('studentContact').value.trim();
+        if (!name || !contact) {
+            alert('Please fill in your name and contact info.');
+            return;
+        }
+
         const type = document.querySelector('input[name="requestType"]:checked').value;
-        const btn = document.getElementById('submitClaim');
-        
-        btn.disabled = true;
-        btn.innerText = "Sending Request...";
+        btn.disabled    = true;
+        btn.textContent = 'Sending Request…';
 
         try {
-            await db.collection("requests").add({
-                itemId: itemId,
-                itemName: itemName,
-                studentName: document.getElementById('studentName').value,
-                contact: document.getElementById('studentContact').value,
-                type: type, // <--- Saves "Claim" or "Inquiry"
-                message: document.getElementById('claimMessage').value,
-                status: "unread",
-                timestamp: firebase.firestore.FieldValue.serverTimestamp()
+            await db.collection('requests').add({
+                itemId:      itemId,
+                itemName:    itemName,
+                studentName: name,
+                contact:     contact,
+                type:        type,
+                message:     document.getElementById('claimMessage').value,
+                status:      'unread',
+                timestamp:   firebase.firestore.FieldValue.serverTimestamp()
             });
 
-            alert(`Your ${type} has been sent successfully!`);
-            window.location.href = "index.html";
+            alert('Your ' + type + ' has been sent successfully!');
+            window.location.href = 'index.html';
         } catch (error) {
-            console.error("Submission Error:", error);
-            alert("Error sending request: " + error.message);
-            btn.disabled = false;
-            btn.innerText = "Send Request";
+            console.error('Submission Error:', error);
+            alert('Error sending request: ' + error.message);
+            btn.disabled    = false;
+            btn.textContent = 'Send Request';
         }
     });
 }
 
-// 7. DATABASE HELPER
-async function saveRequestToFirestore(itemId, itemName, studentName, contact, requestType, message) {
-    try {
-        await db.collection("requests").add({
-            itemId: itemId,
-            itemName: itemName,
-            studentName: studentName,
-            contact: contact,
-            type: requestType,
-            message: message, // Saving the student's question
-            timestamp: firebase.firestore.FieldValue.serverTimestamp()
-        });
-    } catch (error) {
-        console.error("Error:", error);
-    }
-}
-
-// 8. UPDATED ADMIN REQUESTS VIEWER
+// ─── 7. ADMIN REQUESTS VIEWER ───────────────────────────────────────────────
 function renderRequestsTable() {
     const requestsTable = document.getElementById('requestsTable');
     if (!requestsTable) return;
 
-    db.collection("requests").orderBy("timestamp", "desc").onSnapshot((snapshot) => {
+    db.collection('requests').orderBy('timestamp', 'desc').onSnapshot((snapshot) => {
         requestsTable.innerHTML = '';
-        
+
         if (snapshot.empty) {
             requestsTable.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:20px;">No claims or inquiries yet.</td></tr>';
             return;
         }
 
         snapshot.forEach((doc) => {
-            const req = doc.data();
-            const date = req.timestamp ? req.timestamp.toDate().toLocaleDateString() : "Just now";
+            const req  = doc.data();
+            const date = req.timestamp ? req.timestamp.toDate().toLocaleDateString() : 'Just now';
 
-            requestsTable.innerHTML += `
-                <tr style="border-bottom: 1px solid #eee;">
-                    <td style="padding:12px;"><strong>${req.itemName}</strong></td>
-                    <td style="padding:12px;">${req.studentName}</td>
-                    <td style="padding:12px;">${req.contact}</td>
-                    <td style="padding:12px;"><span class="type-badge">${req.type}</span></td>
-                    <td style="padding:12px;"><em>${req.message || "No message"}</em></td>
-                    <td style="padding:12px;">${date}</td>
-                    <td style="padding:12px;">
-                        <button class="delete-btn" onclick="deleteRequest('${doc.id}')" style="background:#e74c3c; color:white; border:none; padding:5px 10px; border-radius:4px; cursor:pointer;">Remove</button>
-                    </td>
-                </tr>`;
+            const tr = document.createElement('tr');
+            tr.style.borderBottom = '1px solid #eee';
+
+            const fields = [req.itemName, req.studentName, req.contact, null, req.message || 'No message', date, null];
+
+            fields.forEach((text, i) => {
+                const td = document.createElement('td');
+                td.style.padding = '12px';
+
+                if (i === 3) {
+                    const badge = document.createElement('span');
+                    badge.className   = 'type-badge';
+                    badge.textContent = req.type;
+                    td.appendChild(badge);
+                } else if (i === 6) {
+                    const btn = document.createElement('button');
+                    btn.textContent   = 'Remove';
+                    btn.style.cssText = 'background:#e74c3c; color:white; border:none; padding:5px 10px; border-radius:4px; cursor:pointer;';
+                    btn.addEventListener('click', () => deleteRequest(doc.id));
+                    td.appendChild(btn);
+                } else if (i === 0) {
+                    const s = document.createElement('strong');
+                    s.textContent = text;
+                    td.appendChild(s);
+                } else {
+                    td.textContent = text;
+                    if (i === 4) td.style.fontStyle = 'italic';
+                }
+
+                tr.appendChild(td);
+            });
+
+            requestsTable.appendChild(tr);
         });
     });
 }
 
-// Function to delete a request
 async function deleteRequest(id) {
-    if(confirm("Are you sure you want to remove this request?")) {
+    if (confirm('Are you sure you want to remove this request?')) {
         try {
-            await db.collection("requests").doc(id).delete();
+            await db.collection('requests').doc(id).delete();
         } catch (error) {
-            console.error("Error deleting request:", error);
+            console.error('Error deleting request:', error);
         }
     }
 }
 
-// Initialize Admin View if on admin page
-window.onload = () => {
-    if (window.location.pathname.includes('admin.html')) {
-        if (sessionStorage.getItem('isAdmin') === 'true') {
-            showAdminPanel();
-        }
+// ─── 8. PAGE INIT ────────────────────────────────────────────────────────────
+window.addEventListener('load', () => {
+    const path = window.location.pathname;
+
+    if (path.includes('admin.html')) {
+        if (sessionStorage.getItem('isAdmin') === 'true') showAdminPanel();
     }
-};
+
+    if (path.includes('claim.html')) {
+        loadClaimPage();
+    }
+});

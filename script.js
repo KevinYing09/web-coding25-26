@@ -1,3 +1,183 @@
+// ─── 0. AI SIMILARITY MATCHING ──────────────────────────────────────────────
+const ANTHROPIC_API_KEY = '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';
+
+// Stores the IDs returned by the last AI search (null = no AI search active)
+let aiMatchResults = null; // [{ id, reason }] or null
+
+async function findAIMatches() {
+    const descInput = document.getElementById('aiDescInput');
+    const resultsDiv = document.getElementById('aiResults');
+    const findBtn = document.getElementById('aiFindBtn');
+    const description = descInput.value.trim();
+
+    if (!description) {
+        descInput.focus();
+        return;
+    }
+
+    if (ANTHROPIC_API_KEY === 'YOUR_ANTHROPIC_API_KEY_HERE') {
+        resultsDiv.innerHTML = '<p style="color:#e74c3c;"><i class="fa fa-exclamation-triangle"></i> Please set your Anthropic API key in script.js first.</p>';
+        return;
+    }
+
+    findBtn.disabled = true;
+    findBtn.textContent = 'Searching…';
+    resultsDiv.innerHTML = '<p style="color:#888; font-style:italic;"><i class="fa fa-spinner fa-spin"></i> Comparing your description against current items…</p>';
+
+    try {
+        // Fetch all approved items from Firestore
+        const snapshot = await db.collection('items').where('status', '==', 'approved').get();
+        if (snapshot.empty) {
+            resultsDiv.innerHTML = '<p style="color:#888;">No items are currently listed.</p>';
+            return;
+        }
+
+        const items = [];
+        snapshot.forEach(doc => {
+            const d = doc.data();
+            items.push({
+                id: doc.id,
+                name: d.name || '',
+                category: d.category || '',
+                description: d.description || '',
+                location: d.location || ''
+            });
+        });
+
+        const itemsList = items.map((it, i) =>
+            `${i + 1}. ID: ${it.id} | Name: ${it.name} | Category: ${it.category} | Description: ${it.description} | Found at: ${it.location}`
+        ).join('\n');
+
+        const prompt = `You are a helpful assistant for a school lost & found system.
+A student is looking for their lost item and described it as: "${description}"
+
+Here are the currently listed found items:
+${itemsList}
+
+Return a JSON array of the top 1–3 best matching items. Only include items that are genuinely plausible matches — don't force matches if none fit well. Each object must have:
+- "id": the exact item ID string from the list
+- "reason": one short sentence explaining why it matches (e.g., "Both are black Nike hoodies in size medium")
+
+Return ONLY the JSON array with no other text or markdown.`;
+
+        const response = await fetch('https://api.anthropic.com/v1/messages', {
+            method: 'POST',
+            headers: {
+                'x-api-key': ANTHROPIC_API_KEY,
+                'anthropic-version': '2023-06-01',
+                'content-type': 'application/json',
+                'anthropic-dangerous-direct-browser-access': 'true'
+            },
+            body: JSON.stringify({
+                model: 'claude-haiku-4-5-20251001',
+                max_tokens: 512,
+                messages: [{ role: 'user', content: prompt }]
+            })
+        });
+
+        if (!response.ok) {
+            const err = await response.json();
+            throw new Error(err.error?.message || 'API request failed');
+        }
+
+        const data = await response.json();
+        // Strip markdown code fences if Claude wraps the response
+        const raw = data.content[0].text.trim().replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '');
+        const matches = JSON.parse(raw);
+
+        if (!Array.isArray(matches) || matches.length === 0) {
+            aiMatchResults = null;
+            resultsDiv.innerHTML = '<p style="color:#888;">No strong matches found. Try a more detailed description.</p>';
+            refreshCardVisibility();
+            return;
+        }
+
+        aiMatchResults = matches;
+        refreshCardVisibility();
+
+        // Show match summary
+        resultsDiv.innerHTML = `<p style="color:#27ae60; font-weight:bold;"><i class="fa fa-check-circle"></i> Found ${matches.length} possible match${matches.length > 1 ? 'es' : ''} — highlighted below.</p>`;
+
+    } catch (err) {
+        console.error('AI match error:', err);
+        resultsDiv.innerHTML = `<p style="color:#e74c3c;">Error: ${err.message}</p>`;
+        aiMatchResults = null;
+    } finally {
+        findBtn.disabled = false;
+        findBtn.textContent = 'Find Matches';
+    }
+}
+
+function clearAISearch() {
+    aiMatchResults = null;
+    document.getElementById('aiDescInput').value = '';
+    document.getElementById('aiResults').innerHTML = '';
+    refreshCardVisibility();
+    // Collapse the panel
+    const panel = document.getElementById('aiSearchPanel');
+    if (panel) panel.style.display = 'none';
+    const toggle = document.getElementById('aiToggleBtn');
+    if (toggle) toggle.setAttribute('aria-expanded', 'false');
+}
+
+function toggleAIPanel() {
+    const panel = document.getElementById('aiSearchPanel');
+    const btn = document.getElementById('aiToggleBtn');
+    const isOpen = panel.style.display !== 'none';
+    panel.style.display = isOpen ? 'none' : 'block';
+    btn.setAttribute('aria-expanded', String(!isOpen));
+    if (!isOpen) document.getElementById('aiDescInput').focus();
+}
+
+// Applies AI match highlighting on top of the regular filter
+function refreshCardVisibility() {
+    const searchTerm       = document.getElementById('searchInput') ? document.getElementById('searchInput').value.toLowerCase() : '';
+    const selectedCategory = document.getElementById('categoryFilter') ? document.getElementById('categoryFilter').value : 'all';
+
+    document.querySelectorAll('.card').forEach(card => {
+        const itemName        = card.querySelector('h3') ? card.querySelector('h3').textContent.toLowerCase() : '';
+        const itemCategory    = card.dataset.category || '';
+        const matchesSearch   = itemName.includes(searchTerm);
+        const matchesCategory = (selectedCategory === 'all' || itemCategory === selectedCategory);
+        const passesFilter    = matchesSearch && matchesCategory;
+
+        if (!passesFilter) {
+            card.style.display = 'none';
+            return;
+        }
+
+        card.style.display = 'block';
+
+        if (aiMatchResults) {
+            const match = aiMatchResults.find(m => m.id === card.dataset.itemId);
+            if (match) {
+                card.style.outline = '3px solid #27ae60';
+                card.style.opacity = '1';
+                // Add or update reason badge
+                let badge = card.querySelector('.ai-match-badge');
+                if (!badge) {
+                    badge = document.createElement('div');
+                    badge.className = 'ai-match-badge';
+                    badge.style.cssText = 'background:#27ae60; color:white; font-size:0.78rem; padding:5px 10px; line-height:1.3;';
+                    card.prepend(badge);
+                }
+                badge.innerHTML = '<i class="fa fa-magic" style="margin-right:5px;"></i>';
+                badge.appendChild(document.createTextNode(match.reason));
+            } else {
+                card.style.outline = 'none';
+                card.style.opacity = '0.35';
+                const badge = card.querySelector('.ai-match-badge');
+                if (badge) badge.remove();
+            }
+        } else {
+            card.style.outline = 'none';
+            card.style.opacity = '1';
+            const badge = card.querySelector('.ai-match-badge');
+            if (badge) badge.remove();
+        }
+    });
+}
+
 // ─── 1. FIREBASE CONFIGURATION ──────────────────────────────────────────────
 const firebaseConfig = {
     apiKey: "AIzaSyBPfaUczJPKQQ-WYpDNWuoDC4h_7TQbzRQ",
@@ -71,10 +251,10 @@ if (fileInput) {
 function updateFileLabel() {
     if (!fileLabel) return;
     if (selectedFiles.length === 0) {
-        fileLabel.textContent           = '📷 Upload Photos (up to 5)';
+        fileLabel.innerHTML             = '<i class="fa fa-camera"></i> Upload Photos (up to 5)';
         fileLabel.style.backgroundColor = '#3498db';
     } else {
-        fileLabel.textContent           = selectedFiles.length + ' photo' + (selectedFiles.length > 1 ? 's' : '') + ' selected — add more?';
+        fileLabel.innerHTML             = '<i class="fa fa-camera"></i> ' + selectedFiles.length + ' photo' + (selectedFiles.length > 1 ? 's' : '') + ' selected — add more?';
         fileLabel.style.backgroundColor = '#2ecc71';
     }
 }
@@ -94,7 +274,7 @@ function renderPhotoPreviews() {
             img.style.cssText = 'width:80px; height:80px; object-fit:cover; border-radius:6px; border:2px solid #ddd;';
 
             const removeBtn = document.createElement('button');
-            removeBtn.textContent = '✕';
+            removeBtn.innerHTML = '<i class="fa fa-times"></i>';
             removeBtn.type        = 'button';
             removeBtn.setAttribute('aria-label', 'Remove photo ' + (index + 1));
             removeBtn.style.cssText = 'position:absolute; top:-6px; right:-6px; width:20px; height:20px; border-radius:50%; background:#e74c3c; color:white; border:none; font-size:10px; cursor:pointer; padding:0; line-height:20px; text-align:center;';
@@ -185,6 +365,7 @@ if (itemsGrid) {
               card.setAttribute('role', 'button');
               card.setAttribute('aria-label', 'View details for ' + item.name);
               card.dataset.category = item.category;
+              card.dataset.itemId   = doc.id;
 
               // Show first photo on the card; badge shows count if >1
               const imgWrapper = document.createElement('div');
@@ -196,7 +377,7 @@ if (itemsGrid) {
 
               if (images.length > 1) {
                   const badge = document.createElement('span');
-                  badge.textContent = '📷 ' + images.length;
+                  badge.innerHTML = '<i class="fa fa-camera"></i> ' + images.length;
                   badge.style.cssText = 'position:absolute; bottom:8px; right:8px; background:rgba(0,0,0,0.6); color:white; border-radius:12px; padding:2px 8px; font-size:0.8rem; pointer-events:none;';
                   imgWrapper.append(img, badge);
               } else {
@@ -210,7 +391,7 @@ if (itemsGrid) {
               h3.textContent = item.name;
 
               const loc = document.createElement('p');
-              loc.textContent = '📍 ' + item.location;
+              loc.innerHTML = '<i class="fa fa-map-marker"></i> ' + item.location;
 
               const btn = document.createElement('button');
               btn.textContent = 'Inquire / Claim';
@@ -230,15 +411,7 @@ if (itemsGrid) {
 
 // ─── SEARCH & CATEGORY FILTER ───────────────────────────────────────────────
 function applyFilters() {
-    const searchTerm       = document.getElementById('searchInput').value.toLowerCase();
-    const selectedCategory = document.getElementById('categoryFilter').value;
-    document.querySelectorAll('.card').forEach(card => {
-        const itemName        = card.querySelector('h3').textContent.toLowerCase();
-        const itemCategory    = card.dataset.category;
-        const matchesSearch   = itemName.includes(searchTerm);
-        const matchesCategory = (selectedCategory === 'all' || itemCategory === selectedCategory);
-        card.style.display    = (matchesSearch && matchesCategory) ? 'block' : 'none';
-    });
+    refreshCardVisibility();
 }
 
 if (document.getElementById('searchInput')) {
@@ -401,7 +574,7 @@ function openModal(images, name, loc, desc, id) {
 
     const details = document.createElement('p');
     const locStrong = document.createElement('strong');
-    locStrong.textContent = '📍 Location: ';
+    locStrong.innerHTML = '<i class="fa fa-map-marker"></i> Location: ';
     details.append(locStrong, document.createTextNode(loc), document.createElement('br'), document.createElement('br'), document.createTextNode(desc || ''));
 
     const hr = document.createElement('hr');
@@ -415,7 +588,7 @@ function openModal(images, name, loc, desc, id) {
     claimBtn.addEventListener('click', () => claimItem(id));
 
     const closeBtn = document.createElement('button');
-    closeBtn.textContent = '✕ Close';
+    closeBtn.innerHTML = '<i class="fa fa-times"></i> Close';
     closeBtn.setAttribute('aria-label', 'Close modal');
     closeBtn.style.cssText = 'width:100%; padding:10px; margin-top:10px; background:#95a5a6; color:white; border:none; border-radius:8px; font-size:1rem; cursor:pointer;';
     closeBtn.addEventListener('click', closeModal);
@@ -561,7 +734,7 @@ async function loadClaimPage() {
             h3.textContent = 'Claiming: ' + item.name;
 
             const p = document.createElement('p');
-            p.textContent = '📍 Found at: ' + item.location;
+            p.innerHTML = '<i class="fa fa-map-marker"></i> Found at: ' + item.location;
 
             preview.innerHTML = '';
             preview.append(img, h3, p);

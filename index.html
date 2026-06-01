@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>School Lost & Found</title>
+    <title>School Lost &amp; Found</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,100;0,300;0,400;0,700;0,900;1,100;1,300;1,400;1,700;1,900&display=swap" rel="stylesheet">
@@ -17,9 +17,9 @@
     <nav>
         <div class="logo">
             <img src="images/logo.png" alt="School Logo" class="nav-logo">
-            <span>Skyline Lost & Found</span>
+            <span>Skyline Lost &amp; Found</span>
         </div>
-        <ul class = "navbar">
+        <ul class="navbar">
             <li><a href="index.html">View Items</a></li>
             <li><a href="report.html">Report Found Item</a></li>
             <li><a href="admin.html">Admin Panel</a></li>
@@ -28,67 +28,60 @@
 
     <main>
         <header>
-          <h1>Lost and Found Gallery</h1>
-          <div class = "search-container" style="display: flex; gap: 10px; align-items: center;">
-              <input type="text" id="searchInput" placeholder="Search for an item...">
-              <select id="categoryFilter">
-                  <option class = "drop" value="all">All Categories</option>
-                  <option class = "drop" value="electronics">Electronics</option>
-                  <option class = "drop" value="clothing">Clothing</option>
-                  <option class = "drop" value="water bottles">Water Bottles</option>
-                  <option class = "drop" value="other">Other</option>
-              </select>
-          </div>
+            <h1>Lost and Found Gallery</h1>
+            <div class="search-container" style="display:flex; gap:10px; align-items:center;">
+                <input type="text" id="searchInput" placeholder="Search for an item…">
+                <select id="categoryFilter">
+                    <option value="all">All Categories</option>
+                    <option value="electronics">Electronics</option>
+                    <option value="clothing">Clothing</option>
+                    <option value="water bottles">Water Bottles</option>
+                    <option value="other">Other</option>
+                </select>
+            </div>
         </header>
 
         <section id="itemsGrid" class="grid"></section>
 
-        <div id="itemModal" class="modal-overlay" onclick="closeModal()">
-          <div class="modal-content" onclick="event.stopPropagation()">
-            <img id="modalImage" src="" alt="Item Image">
-            <div class="modal-details">
-              <h2 id="modalName"></h2>
-              <p id="modalLocation"></p>
-              <p id="modalDescription"></p>
-              <div id="modalActionArea"></div>
-            </div>
-          </div>
-        </div>
+        <!--
+            #itemModal is intentionally empty here.
+            openModal() in script.js builds its contents dynamically using DOM
+            methods (no innerHTML with user data) to prevent XSS.
+        -->
+        <div id="itemModal" class="modal-overlay"></div>
     </main>
+
     <script src="script.js"></script>
+
+    <footer class="site-footer" role="contentinfo">
+        <div class="footer-content">
+            <div class="footer-section">
+                <h3><i class="fa fa-map-marker"></i> School Location</h3>
+                <p>3251 E 3760 S<br>Salt Lake City, UT 84109</p>
+            </div>
+            <div class="footer-section">
+                <h3><i class="fa fa-building"></i> Lost &amp; Found Location</h3>
+                <p>Physical items are held in the <strong>Main Office</strong>.<br>Please bring your ID when claiming.</p>
+            </div>
+            <div class="footer-section">
+                <h3><i class="fa fa-phone"></i> Contact Us</h3>
+                <p>Phone: 385-646-5420<br>Email: bkanderson@graniteschools.org</p>
+            </div>
+            <div class="footer-section">
+                <h3><i class="fa fa-language"></i> Language</h3>
+                <div id="google_translate_element"></div>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2026 Skyline High School Lost &amp; Found. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script type="text/javascript">
+        function googleTranslateElementInit() {
+            new google.translate.TranslateElement({ pageLanguage: 'en' }, 'google_translate_element');
+        }
+    </script>
+    <script type="text/javascript" src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
 </body>
-<footer class="site-footer" role="contentinfo">
-    <div class="footer-content">
-        <div class="footer-section">
-            <h3><i class="fa fa-map-marker"></i> School Location</h3>
-            <p>3251 E 3760 S<br>Salt Lake City, UT 84109</p>
-        </div>
-
-        <div class="footer-section">
-            <h3><i class="fa fa-building"></i> Lost & Found Location</h3>
-            <p>Physical items are held in the <strong>Main Office</strong>.<br>Please bring your ID when claiming.</p>
-        </div>
-
-        <div class="footer-section">
-            <h3><i class="fa fa-phone"></i> Contact Us</h3>
-            <p>Phone: 385-646-5420<br>Email: bkanderson@graniteschools.org</p>
-        </div>
-
-        <div class="footer-section">
-            <h3><i class="fa fa-language"></i> Language</h3>
-            <div id="google_translate_element"></div>
-        </div>
-    </div>
-    <div class="footer-bottom">
-        <p>&copy; 2026 Skyline High School Lost & Found. All rights reserved.</p>
-    </div>
-</footer>
-
-<script type="text/javascript">
-function googleTranslateElementInit() {
-  new google.translate.TranslateElement({pageLanguage: 'en'}, 'google_translate_element');
-}
-</script>
-<script type="text/javascript" src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
-
 </html>

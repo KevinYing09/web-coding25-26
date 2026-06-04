@@ -31,6 +31,7 @@
     </style>
 </head>
 <body>
+    <a href="#main-content" class="skip-link">Skip to main content</a>
     <nav>
         <div class="logo">
             <img src="images/logo.png" alt="School Logo" class="nav-logo">
@@ -43,7 +44,7 @@
         </ul>
     </nav>
 
-    <div class="form-container">
+    <div class="form-container" id="main-content">
         <h2>Found Something?</h2>
         <form id="reportForm">
             <label>Item Name</label>
@@ -66,7 +67,7 @@
 
             <!-- Multi-photo upload -->
             <label for="photoFile" class="custom-file-upload" aria-label="Upload photos of the item">
-                <i class="fa fa-cloud-upload"></i> Upload Photos (up to 5)
+                <i class="fa fa-cloud-upload" aria-hidden="true"></i> Upload Photos (up to 5)
             </label>
             <!-- multiple attribute allows selecting several files at once -->
             <input type="file" id="photoFile" accept="image/*" multiple>
@@ -87,19 +88,19 @@
 <footer class="site-footer" role="contentinfo">
     <div class="footer-content">
         <div class="footer-section">
-            <h3><i class="fa fa-map-marker"></i> School Location</h3>
+            <h3><i class="fa fa-map-marker" aria-hidden="true"></i> School Location</h3>
             <p>3251 E 3760 S<br>Salt Lake City, UT 84109</p>
         </div>
         <div class="footer-section">
-            <h3><i class="fa fa-building"></i> Lost &amp; Found Location</h3>
+            <h3><i class="fa fa-building" aria-hidden="true"></i> Lost &amp; Found Location</h3>
             <p>Physical items are held in the <strong>Main Office</strong>.<br>Please bring your ID when claiming.</p>
         </div>
         <div class="footer-section">
-            <h3><i class="fa fa-phone"></i> Contact Us</h3>
+            <h3><i class="fa fa-phone" aria-hidden="true"></i> Contact Us</h3>
             <p>Phone: 385-646-5420<br>Email: bkanderson@graniteschools.org</p>
         </div>
         <div class="footer-section">
-            <h3><i class="fa fa-language"></i> Language</h3>
+            <h3><i class="fa fa-language" aria-hidden="true"></i> Language</h3>
             <div id="google_translate_element"></div>
         </div>
     </div>

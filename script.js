@@ -575,14 +575,52 @@ function openModal(images, name, loc, desc, id) {
 
     modal.style.display = 'flex';
 
-    // Focus the first interactive element — the claim button (or prev arrow if
-    // the user is clearly navigating by keyboard, but claim is the primary action)
-    setTimeout(() => claimBtn.focus(), 100);
+    // Store previously focused element so we can return focus on close
+    modalPreviousFocus = document.activeElement;
+
+    // Set up focus trap and move focus into the modal
+    setTimeout(() => {
+        modalTrapHandler = trapFocus(content);
+        if (modalTrapHandler) modal.addEventListener('keydown', modalTrapHandler);
+        claimBtn.focus();
+    }, 100);
+}
+
+// Tracks the element focused before a modal opened, so we can restore it on close
+let modalPreviousFocus = null;
+let modalTrapHandler   = null;
+
+function trapFocus(container) {
+    const FOCUSABLE = 'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+    const elements  = Array.from(container.querySelectorAll(FOCUSABLE));
+    if (!elements.length) return null;
+
+    const first = elements[0];
+    const last  = elements[elements.length - 1];
+
+    return function handler(e) {
+        if (e.key !== 'Tab') return;
+        if (e.shiftKey) {
+            if (document.activeElement === first) { e.preventDefault(); last.focus(); }
+        } else {
+            if (document.activeElement === last)  { e.preventDefault(); first.focus(); }
+        }
+    };
 }
 
 function closeModal() {
     const modal = document.getElementById('itemModal');
-    if (modal) modal.style.display = 'none';
+    if (modal) {
+        modal.style.display = 'none';
+        if (modalTrapHandler) {
+            modal.removeEventListener('keydown', modalTrapHandler);
+            modalTrapHandler = null;
+        }
+        if (modalPreviousFocus) {
+            modalPreviousFocus.focus();
+            modalPreviousFocus = null;
+        }
+    }
 }
 
 document.addEventListener('click', (e) => {

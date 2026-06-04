@@ -1,5 +1,5 @@
 // ─── 0. AI SIMILARITY MATCHING ──────────────────────────────────────────────
-const ANTHROPIC_API_KEY = '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';
+const AI_MATCH_URL = 'https://ai-key.kevin-ying-ut.workers.dev/';
 
 // Stores the IDs returned by the last AI search (null = no AI search active)
 let aiMatchResults = null; // [{ id, reason }] or null
@@ -15,8 +15,8 @@ async function findAIMatches() {
         return;
     }
 
-    if (ANTHROPIC_API_KEY === 'YOUR_ANTHROPIC_API_KEY_HERE') {
-        resultsDiv.innerHTML = '<p style="color:#e74c3c;"><i class="fa fa-exclamation-triangle"></i> Please set your Anthropic API key in script.js first.</p>';
+    if (AI_MATCH_URL === 'YOUR_WORKER_URL_HERE') {
+        resultsDiv.innerHTML = '<p style="color:#e74c3c;"><i class="fa fa-exclamation-triangle"></i> Please deploy the Cloudflare Worker and update AI_MATCH_URL in script.js.</p>';
         return;
     }
 
@@ -44,45 +44,21 @@ async function findAIMatches() {
             });
         });
 
-        const itemsList = items.map((it, i) =>
-            `${i + 1}. ID: ${it.id} | Name: ${it.name} | Category: ${it.category} | Description: ${it.description} | Found at: ${it.location}`
-        ).join('\n');
-
-        const prompt = `You are a helpful assistant for a school lost & found system.
-A student is looking for their lost item and described it as: "${description}"
-
-Here are the currently listed found items:
-${itemsList}
-
-Return a JSON array of the top 1–3 best matching items. Only include items that are genuinely plausible matches — don't force matches if none fit well. Each object must have:
-- "id": the exact item ID string from the list
-- "reason": one short sentence explaining why it matches (e.g., "Both are black Nike hoodies in size medium")
-
-Return ONLY the JSON array with no other text or markdown.`;
-
-        const response = await fetch('https://api.anthropic.com/v1/messages', {
+        // Call our Firebase proxy — API key stays server-side
+        const response = await fetch(AI_MATCH_URL, {
             method: 'POST',
-            headers: {
-                'x-api-key': ANTHROPIC_API_KEY,
-                'anthropic-version': '2023-06-01',
-                'content-type': 'application/json',
-                'anthropic-dangerous-direct-browser-access': 'true'
-            },
-            body: JSON.stringify({
-                model: 'claude-haiku-4-5-20251001',
-                max_tokens: 512,
-                messages: [{ role: 'user', content: prompt }]
-            })
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify({ description, items })
         });
 
         if (!response.ok) {
             const err = await response.json();
-            throw new Error(err.error?.message || 'API request failed');
+            throw new Error(err.error || 'Function request failed');
         }
 
         const data = await response.json();
-        // Strip markdown code fences if Claude wraps the response
-        const raw = data.content[0].text.trim().replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '');
+        // Strip markdown code fences if present
+        const raw = data.result.trim().replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '');
         const matches = JSON.parse(raw);
 
         if (!Array.isArray(matches) || matches.length === 0) {

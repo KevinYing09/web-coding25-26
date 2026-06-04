@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>School Lost &amp; Found</title>
+    <title>Lost and Found Gallery | Skyline High School</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,100;0,300;0,400;0,700;0,900;1,100;1,300;1,400;1,700;1,900&display=swap" rel="stylesheet">
@@ -14,6 +14,7 @@
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js"></script>
 </head>
 <body>
+    <a href="#main-content" class="skip-link">Skip to main content</a>
     <nav>
         <div class="logo">
             <img src="images/logo.png" alt="School Logo" class="nav-logo">
@@ -26,11 +27,13 @@
         </ul>
     </nav>
 
-    <main>
+    <main id="main-content">
         <header>
             <h1>Lost and Found Gallery</h1>
             <div class="search-container">
+                <label for="searchInput" class="sr-only">Search items</label>
                 <input type="text" id="searchInput" placeholder="Search for an item...">
+                <label for="categoryFilter" class="sr-only">Filter by category</label>
                 <select id="categoryFilter">
                     <option value="all">All Categories</option>
                     <option value="electronics">Electronics</option>
@@ -82,19 +85,19 @@
     <footer class="site-footer" role="contentinfo">
         <div class="footer-content">
             <div class="footer-section">
-                <h3><i class="fa fa-map-marker"></i> School Location</h3>
+                <h3><i class="fa fa-map-marker" aria-hidden="true"></i> School Location</h3>
                 <p>3251 E 3760 S<br>Salt Lake City, UT 84109</p>
             </div>
             <div class="footer-section">
-                <h3><i class="fa fa-building"></i> Lost &amp; Found Location</h3>
+                <h3><i class="fa fa-building" aria-hidden="true"></i> Lost &amp; Found Location</h3>
                 <p>Physical items are held in the <strong>Main Office</strong>.<br>Please bring your ID when claiming.</p>
             </div>
             <div class="footer-section">
-                <h3><i class="fa fa-phone"></i> Contact Us</h3>
+                <h3><i class="fa fa-phone" aria-hidden="true"></i> Contact Us</h3>
                 <p>Phone: 385-646-5420<br>Email: bkanderson@graniteschools.org</p>
             </div>
             <div class="footer-section">
-                <h3><i class="fa fa-language"></i> Language</h3>
+                <h3><i class="fa fa-language" aria-hidden="true"></i> Language</h3>
                 <div id="google_translate_element"></div>
             </div>
         </div>

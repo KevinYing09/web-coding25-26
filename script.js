@@ -1011,3 +1011,34 @@ window.addEventListener('load', () => {
         loadClaimPage();
     }
 });
+
+// ─── 9. HAMBURGER MENU ───────────────────────────────────────────────────────
+(function () {
+    const hamburger = document.querySelector('.hamburger');
+    const navbar    = document.querySelector('.navbar');
+    if (!hamburger || !navbar) return;
+
+    hamburger.addEventListener('click', () => {
+        const isOpen = navbar.classList.toggle('open');
+        hamburger.setAttribute('aria-expanded', String(isOpen));
+        hamburger.querySelector('i').className = isOpen ? 'fa fa-times' : 'fa fa-bars';
+    });
+
+    // Close the menu when any nav link is clicked
+    navbar.querySelectorAll('a').forEach(link => {
+        link.addEventListener('click', () => {
+            navbar.classList.remove('open');
+            hamburger.setAttribute('aria-expanded', 'false');
+            hamburger.querySelector('i').className = 'fa fa-bars';
+        });
+    });
+
+    // Close on outside click
+    document.addEventListener('click', (e) => {
+        if (!hamburger.contains(e.target) && !navbar.contains(e.target)) {
+            navbar.classList.remove('open');
+            hamburger.setAttribute('aria-expanded', 'false');
+            hamburger.querySelector('i').className = 'fa fa-bars';
+        }
+    });
+}());

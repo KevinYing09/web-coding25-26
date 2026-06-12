@@ -152,6 +152,46 @@ function refreshCardVisibility() {
             if (badge) badge.remove();
         }
     });
+
+    // Show / hide "no results" empty state when search or filter hides everything
+    const allCards = Array.from(document.querySelectorAll('.card'));
+    let noResultsEl = document.getElementById('noResultsMsg');
+
+    if (allCards.length > 0) {
+        const anyVisible = allCards.some(c => c.style.display !== 'none');
+
+        if (!anyVisible) {
+            if (!noResultsEl) {
+                noResultsEl = document.createElement('div');
+                noResultsEl.id = 'noResultsMsg';
+                noResultsEl.className = 'empty-state';
+                if (itemsGrid) itemsGrid.appendChild(noResultsEl);
+            }
+
+            const icon = document.createElement('i');
+            icon.className = 'fa fa-search';
+
+            const heading = document.createElement('h3');
+            heading.textContent = 'No items found';
+
+            const msg = document.createElement('p');
+            if (searchTerm) {
+                msg.appendChild(document.createTextNode('No results for “'));
+                const strong = document.createElement('strong');
+                strong.textContent = searchTerm;
+                msg.appendChild(strong);
+                msg.appendChild(document.createTextNode('”. Try different keywords.'));
+            } else {
+                msg.textContent = 'No items match the selected category.';
+            }
+
+            noResultsEl.innerHTML = '';
+            noResultsEl.append(icon, heading, msg);
+
+        } else if (noResultsEl) {
+            noResultsEl.remove();
+        }
+    }
 }
 
 // ─── 1. FIREBASE CONFIGURATION ──────────────────────────────────────────────
@@ -369,13 +409,24 @@ const cardObserver = new IntersectionObserver(
 );
 
 if (itemsGrid) {
+    // Show shimmer placeholders while Firebase loads
+    for (let i = 0; i < 6; i++) {
+        const skel = document.createElement('div');
+        skel.className = 'skeleton-card';
+        skel.innerHTML = '<div class="skeleton-img"></div><div class="skeleton-line"></div><div class="skeleton-line short"></div><div class="skeleton-btn"></div>';
+        itemsGrid.appendChild(skel);
+    }
+
     db.collection('items')
       .where('status', '==', 'approved')
       .onSnapshot((snapshot) => {
           itemsGrid.innerHTML = '';
 
           if (snapshot.empty) {
-              itemsGrid.innerHTML = '<p style="grid-column:1/-1; text-align:center; color:#888; padding:40px 0;">No items found yet. Check back soon!</p>';
+              const empty = document.createElement('div');
+              empty.className = 'empty-state';
+              empty.innerHTML = '<i class="fa fa-inbox"></i><h3>Nothing here yet</h3><p>No lost items have been reported. Check back soon!</p>';
+              itemsGrid.appendChild(empty);
               return;
           }
 
@@ -394,6 +445,14 @@ if (itemsGrid) {
               card.dataset.category = item.category;
               card.dataset.itemId   = doc.id;
 
+              // Category colour map
+              const categoryColors = {
+                  'electronics':   '#3498db',
+                  'clothing':      '#9b59b6',
+                  'water bottles': '#1abc9c',
+                  'other':         '#95a5a6'
+              };
+
               // Show first photo on the card; badge shows count if >1
               const imgWrapper = document.createElement('div');
               imgWrapper.style.cssText = 'position:relative; overflow:hidden;';
@@ -411,6 +470,23 @@ if (itemsGrid) {
                   imgWrapper.append(img, badge);
               } else {
                   imgWrapper.appendChild(img);
+              }
+
+              // Category badge — bottom-left of image
+              const catBadge = document.createElement('span');
+              catBadge.className = 'category-badge';
+              catBadge.textContent = item.category || 'other';
+              catBadge.style.background = categoryColors[item.category] || '#95a5a6';
+              imgWrapper.appendChild(catBadge);
+
+              // "NEW" badge — top-left, shown for items added in the last 48 hours
+              const isNew = item.timestamp &&
+                  (Date.now() - item.timestamp.toDate().getTime()) < 48 * 60 * 60 * 1000;
+              if (isNew) {
+                  const newBadge = document.createElement('span');
+                  newBadge.className = 'new-badge';
+                  newBadge.textContent = 'New';
+                  imgWrapper.appendChild(newBadge);
               }
 
               const cardContent = document.createElement('div');

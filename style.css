@@ -494,6 +494,25 @@ button[onclick^="approve"]:hover {
     font-size: 0.9rem;
 }
 
+/* ── HAMBURGER BUTTON ───────────────────────────────────────────────────────── */
+.hamburger {
+    display: none;
+    background: none;
+    border: 2px solid rgba(255,255,255,0.35);
+    color: white;
+    font-size: 1.1rem;
+    padding: 6px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background 0.2s, border-color 0.2s;
+    line-height: 1;
+}
+
+.hamburger:hover {
+    background: rgba(255,255,255,0.12) !important;
+    border-color: rgba(255,255,255,0.6);
+}
+
 /* ── EMPTY STATE ────────────────────────────────────────────────────────────── */
 .empty-state {
     grid-column: 1 / -1;
@@ -646,18 +665,41 @@ button[onclick^="approve"]:hover {
     }
 
     nav {
-        flex-direction: column;
-        padding: 1rem;
-        text-align: center;
+        flex-wrap: wrap;
+        padding: 0.7rem 1rem;
     }
 
-    nav ul {
-        margin-top: 15px;
-        padding: 0;
+    .hamburger {
+        display: block;
+    }
+
+    nav ul.navbar {
+        display: none;
+        width: 100%;
+        flex-direction: column;
+        gap: 0;
+        margin: 0;
+        padding: 6px 0 2px;
+        border-top: 1px solid rgba(255,255,255,0.15);
+        margin-top: 8px;
+    }
+
+    nav ul.navbar.open {
         display: flex;
-        flex-wrap: wrap;
-        justify-content: center;
-        gap: 10px;
+    }
+
+    nav ul.navbar li {
+        width: 100%;
+    }
+
+    nav ul.navbar li a {
+        display: block;
+        padding: 10px 4px;
+        border-bottom: 1px solid rgba(255,255,255,0.08);
+    }
+
+    nav ul.navbar li:last-child a {
+        border-bottom: none;
     }
 
     .modal-content {

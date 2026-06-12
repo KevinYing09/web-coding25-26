@@ -147,7 +147,7 @@ function refreshCardVisibility() {
             }
         } else {
             card.style.outline = 'none';
-            card.style.opacity = '1';
+            card.style.opacity = ''; // remove inline — CSS .in-view class controls fade
             const badge = card.querySelector('.ai-match-badge');
             if (badge) badge.remove();
         }
@@ -195,6 +195,29 @@ function showAdminPanel() {
 }
 
 // ─── 3. REPORT FORM — multi-photo upload (up to 5) ──────────────────────────
+
+// Resize + compress a File to max 1200px wide at 85% JPEG quality.
+// Reduces a typical phone photo from ~4 MB to ~200 KB before uploading.
+function compressImage(file, maxWidth = 1200, quality = 0.85) {
+    return new Promise((resolve) => {
+        const blobUrl = URL.createObjectURL(file);
+        const img = new Image();
+        img.onload = () => {
+            let { width, height } = img;
+            if (width > maxWidth) {
+                height = Math.round(height * maxWidth / width);
+                width  = maxWidth;
+            }
+            const canvas = document.createElement('canvas');
+            canvas.width  = width;
+            canvas.height = height;
+            canvas.getContext('2d').drawImage(img, 0, 0, width, height);
+            URL.revokeObjectURL(blobUrl);
+            canvas.toBlob(resolve, 'image/jpeg', quality);
+        };
+        img.src = blobUrl;
+    });
+}
 const reportForm  = document.getElementById('reportForm');
 const fileInput   = document.getElementById('photoFile');
 const fileLabel   = document.querySelector('.custom-file-upload');
@@ -278,15 +301,26 @@ if (reportForm) {
         submitBtn.textContent = 'Uploading…';
 
         try {
-            // Upload all photos in parallel
+            // Generate a 400px thumbnail AND 1200px full version for each photo, upload both
             const uploadPromises = selectedFiles.map(async (file) => {
-                const fileName   = Date.now() + '_' + Math.random().toString(36).slice(2) + '_' + file.name;
-                const storageRef = storage.ref('item_images/' + fileName);
-                const snapshot   = await storageRef.put(file);
-                return snapshot.ref.getDownloadURL();
+                const base = Date.now() + '_' + Math.random().toString(36).slice(2);
+                const [thumb, full] = await Promise.all([
+                    compressImage(file, 400,  0.80),
+                    compressImage(file, 1200, 0.85)
+                ]);
+                const [thumbSnap, fullSnap] = await Promise.all([
+                    storage.ref('item_images/thumbs/' + base + '.jpg').put(thumb),
+                    storage.ref('item_images/full/'   + base + '.jpg').put(full)
+                ]);
+                return {
+                    thumb: await thumbSnap.ref.getDownloadURL(),
+                    full:  await fullSnap.ref.getDownloadURL()
+                };
             });
 
-            const imageURLs = await Promise.all(uploadPromises);
+            const results   = await Promise.all(uploadPromises);
+            const thumbURLs = results.map(r => r.thumb);
+            const fullURLs  = results.map(r => r.full);
 
             await db.collection('items').add({
                 name:        document.getElementById('itemName').value,
@@ -294,8 +328,9 @@ if (reportForm) {
                 category:    document.getElementById('itemCategory').value,
                 description: document.getElementById('description').value,
                 // Keep legacy `image` field (first photo) so old records still work
-                image:       imageURLs[0],
-                images:      imageURLs,
+                image:       thumbURLs[0],
+                images:      thumbURLs,  // 400px thumbnails — used in gallery cards
+                imagesFull:  fullURLs,   // 1200px — used in modal carousel
                 status:      'pending',
                 timestamp:   firebase.firestore.FieldValue.serverTimestamp()
             });
@@ -319,6 +354,20 @@ if (reportForm) {
 // ─── 4. PUBLIC GALLERY ──────────────────────────────────────────────────────
 const itemsGrid = document.getElementById('itemsGrid');
 
+// Fade cards in when they enter the viewport, out when they leave
+const cardObserver = new IntersectionObserver(
+    (entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('in-view');
+            } else {
+                entry.target.classList.remove('in-view');
+            }
+        });
+    },
+    { threshold: 0.08, rootMargin: '0px 0px -20px 0px' }
+);
+
 if (itemsGrid) {
     db.collection('items')
       .where('status', '==', 'approved')
@@ -331,9 +380,11 @@ if (itemsGrid) {
           }
 
           snapshot.forEach((doc) => {
-              const item   = doc.data();
+              const item       = doc.data();
               // Support both multi-image and legacy single-image records
-              const images = item.images && item.images.length ? item.images : [item.image];
+              const images     = item.images     && item.images.length     ? item.images     : [item.image];
+              // imagesFull: high-res versions; fall back to images for old records
+              const imagesFull = item.imagesFull && item.imagesFull.length ? item.imagesFull : images;
 
               const card = document.createElement('div');
               card.className = 'card';
@@ -348,8 +399,10 @@ if (itemsGrid) {
               imgWrapper.style.cssText = 'position:relative; overflow:hidden;';
 
               const img = document.createElement('img');
-              img.src = images[0];
-              img.alt = 'Photo of ' + item.name;
+              img.src      = images[0];
+              img.alt      = 'Photo of ' + item.name;
+              img.loading  = 'lazy';
+              img.decoding = 'async';
 
               if (images.length > 1) {
                   const badge = document.createElement('span');
@@ -377,10 +430,11 @@ if (itemsGrid) {
               cardContent.append(h3, loc, btn);
               card.append(imgWrapper, cardContent);
 
-              card.addEventListener('click', () => openModal(images, item.name, item.location, item.description, doc.id));
+              card.addEventListener('click', () => openModal(images, item.name, item.location, item.description, doc.id, imagesFull));
               card.addEventListener('keydown', (ev) => { if (ev.key === 'Enter') card.click(); });
 
               itemsGrid.appendChild(card);
+              cardObserver.observe(card);
           });
       });
 }
@@ -396,8 +450,10 @@ if (document.getElementById('searchInput')) {
 }
 
 // ─── MODAL with photo carousel ───────────────────────────────────────────────
-function openModal(images, name, loc, desc, id) {
+function openModal(images, name, loc, desc, id, imagesFull) {
     if (!Array.isArray(images)) images = [images]; // backwards compat
+    // imagesFull: 1200px versions for carousel; fall back to images for old records
+    if (!Array.isArray(imagesFull) || !imagesFull.length) imagesFull = images;
     const modal = document.getElementById('itemModal');
     modal.innerHTML = '';
 
@@ -418,8 +474,9 @@ function openModal(images, name, loc, desc, id) {
     carouselWrapper.style.cssText = 'position:relative; background:#000; overflow:hidden;';
 
     const mainImg = document.createElement('img');
-    mainImg.src   = images[0];
-    mainImg.alt   = 'Photo 1 of ' + images.length + ' for ' + name;
+    mainImg.src      = imagesFull[0];
+    mainImg.alt      = 'Photo 1 of ' + imagesFull.length + ' for ' + name;
+    mainImg.decoding = 'async';
     mainImg.style.cssText = 'width:100%; max-height:350px; object-fit:contain; display:block; transition:opacity 0.2s ease;';
 
     // Live region so screen readers announce photo changes
@@ -434,7 +491,7 @@ function openModal(images, name, loc, desc, id) {
         const counterBadge = document.createElement('span');
         counterBadge.style.cssText = 'position:absolute; top:10px; right:10px; background:rgba(0,0,0,0.6); color:white; border-radius:12px; padding:3px 10px; font-size:0.85rem; pointer-events:none;';
         counterBadge.setAttribute('aria-hidden', 'true'); // screen reader uses srAnnounce instead
-        counterBadge.textContent = '1 / ' + images.length;
+        counterBadge.textContent = '1 / ' + imagesFull.length;
 
         // Arrow button shared styles — use flexbox to perfectly centre the glyph,
         // and override the global :focus outline so it sits flush on the circle.
@@ -477,14 +534,14 @@ function openModal(images, name, loc, desc, id) {
         thumbStrip.style.cssText = 'display:flex; gap:6px; padding:8px; background:#111; overflow-x:auto; justify-content:center;';
 
         function goTo(index) {
-            currentIndex = (index + images.length) % images.length;
+            currentIndex = (index + imagesFull.length) % imagesFull.length;
             mainImg.style.opacity = '0';
             setTimeout(() => {
-                mainImg.src = images[currentIndex];
-                mainImg.alt = 'Photo ' + (currentIndex + 1) + ' of ' + images.length + ' for ' + name;
+                mainImg.src = imagesFull[currentIndex];
+                mainImg.alt = 'Photo ' + (currentIndex + 1) + ' of ' + imagesFull.length + ' for ' + name;
                 mainImg.style.opacity = '1';
-                counterBadge.textContent = (currentIndex + 1) + ' / ' + images.length;
-                srAnnounce.textContent   = 'Photo ' + (currentIndex + 1) + ' of ' + images.length;
+                counterBadge.textContent = (currentIndex + 1) + ' / ' + imagesFull.length;
+                srAnnounce.textContent   = 'Photo ' + (currentIndex + 1) + ' of ' + imagesFull.length;
                 // Update thumbnail highlight + ARIA
                 thumbStrip.querySelectorAll('button').forEach((t, i) => {
                     const isActive = i === currentIndex;
@@ -517,8 +574,9 @@ function openModal(images, name, loc, desc, id) {
             ].join(';');
 
             const thumb = document.createElement('img');
-            thumb.src   = url;
-            thumb.alt   = '';          // decorative — button label covers it
+            thumb.src      = url;
+            thumb.alt      = '';          // decorative — button label covers it
+            thumb.decoding = 'async';
             thumb.style.cssText = 'width:50px; height:50px; object-fit:cover; border-radius:4px; display:block; opacity:' + (i === 0 ? '1' : '0.55') + ';';
 
             thumbBtn.appendChild(thumb);
@@ -656,7 +714,9 @@ function renderAdminTable() {
             thumbRow.style.cssText = 'display:flex; gap:4px; align-items:center;';
             images.slice(0, 3).forEach((url, i) => {
                 const img = document.createElement('img');
-                img.src   = url;
+                img.src      = url;
+                img.loading  = 'lazy';
+                img.decoding = 'async';
                 img.style.cssText = 'width:44px; height:44px; object-fit:cover; border-radius:4px;';
                 thumbRow.appendChild(img);
             });

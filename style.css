@@ -78,12 +78,17 @@ nav a { color: white; text-decoration: none; font-weight: bold; }
 }
 
 nav {
-    background: var(--primary);
+    background: rgba(44, 62, 80, 0.92);
     color: white;
     padding: 0.8rem 2rem;
     display: flex;
     justify-content: space-between;
     align-items: center;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
 }
 
 .navbar li a {
@@ -487,6 +492,108 @@ button[onclick^="approve"]:hover {
 .ai-results {
     margin-top: 10px;
     font-size: 0.9rem;
+}
+
+/* ── EMPTY STATE ────────────────────────────────────────────────────────────── */
+.empty-state {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 60px 20px;
+    color: #95a5a6;
+}
+
+.empty-state i {
+    font-size: 3rem;
+    margin-bottom: 16px;
+    display: block;
+    opacity: 0.45;
+}
+
+.empty-state h3 {
+    margin: 0 0 8px;
+    font-size: 1.2rem;
+    color: #7f8c8d;
+    font-weight: 700;
+}
+
+.empty-state p {
+    margin: 0;
+    font-size: 0.95rem;
+    color: #aab;
+}
+
+/* ── SKELETON LOADER ────────────────────────────────────────────────────────── */
+@keyframes shimmer {
+    0%   { background-position: -400px 0; }
+    100% { background-position:  400px 0; }
+}
+
+.skeleton-card {
+    background: white;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+.skeleton-img {
+    width: 100%;
+    height: 250px;
+    background: linear-gradient(90deg, #f0f0f0 25%, #e4e4e4 50%, #f0f0f0 75%);
+    background-size: 400px 100%;
+    animation: shimmer 1.4s ease-in-out infinite;
+}
+
+.skeleton-line {
+    height: 14px;
+    border-radius: 4px;
+    margin: 12px 15px 0;
+    background: linear-gradient(90deg, #f0f0f0 25%, #e4e4e4 50%, #f0f0f0 75%);
+    background-size: 400px 100%;
+    animation: shimmer 1.4s ease-in-out infinite;
+}
+
+.skeleton-line.short {
+    width: 55%;
+    margin-bottom: 8px;
+}
+
+.skeleton-btn {
+    height: 36px;
+    border-radius: 5px;
+    margin: 8px 15px 15px;
+    background: linear-gradient(90deg, #f0f0f0 25%, #e4e4e4 50%, #f0f0f0 75%);
+    background-size: 400px 100%;
+    animation: shimmer 1.4s ease-in-out infinite;
+}
+
+/* ── CARD BADGES ────────────────────────────────────────────────────────────── */
+.category-badge {
+    position: absolute;
+    bottom: 8px;
+    left: 8px;
+    color: white;
+    border-radius: 12px;
+    padding: 2px 9px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+    text-transform: capitalize;
+    pointer-events: none;
+}
+
+.new-badge {
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    background: #e74c3c;
+    color: white;
+    border-radius: 12px;
+    padding: 2px 8px;
+    font-size: 0.7rem;
+    font-weight: 800;
+    letter-spacing: 0.6px;
+    text-transform: uppercase;
+    pointer-events: none;
 }
 
 /* ── RESPONSIVE ─────────────────────────────────────────────────────────────── */

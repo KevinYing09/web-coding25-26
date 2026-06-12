@@ -148,7 +148,14 @@ main { padding: 2rem; max-width: 1200px; margin: auto; }
     border-radius: 8px;
     overflow: hidden;
     box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-    transition: 0.3s;
+    transition: box-shadow 0.3s, opacity 0.5s ease, transform 0.5s ease;
+    opacity: 0;
+    transform: translateY(28px);
+}
+
+.card.in-view {
+    opacity: 1;
+    transform: translateY(0);
 }
 
 .card img {

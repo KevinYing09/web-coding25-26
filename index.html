@@ -31,6 +31,55 @@
     </nav>
 
     <main id="main-content">
+        <!-- ── INTERACTIVE BUILDING MAP ───────────────────────────── -->
+        <section class="building-map-section" aria-label="Interactive school building map">
+            <div class="bm-head">
+                <h2>Explore the Building</h2>
+                <p>Hover an area to see what it is. Click a pod to open its map. Use the arrows to change floors.</p>
+            </div>
+            <div class="bm-floor-label" id="bmFloorLabel"></div>
+            <div class="bm-stage-wrap">
+                <button class="bm-arrow left" id="bmPrev" type="button" aria-label="Previous floor">
+                    <i class="fa fa-chevron-left" aria-hidden="true"></i>
+                </button>
+                <div class="bm-stage" id="bmStage"></div>
+                <button class="bm-arrow right" id="bmNext" type="button" aria-label="Next floor">
+                    <i class="fa fa-chevron-right" aria-hidden="true"></i>
+                </button>
+            </div>
+            <div class="bm-tabs" id="bmTabs"></div>
+        </section>
+
+        <div class="bm-tooltip" id="bmTooltip" aria-hidden="true"></div>
+
+        <!-- Pod popup -->
+        <div class="pod-modal" id="podModal" role="dialog" aria-modal="true" aria-labelledby="podTitle">
+            <div class="pod-modal-card">
+                <div class="pod-modal-bar">
+                    <h3 id="podTitle">Pod</h3>
+                    <button class="pod-close" id="podClose" type="button" aria-label="Close pod map">
+                        <i class="fa fa-times" aria-hidden="true"></i>
+                    </button>
+                </div>
+                <div class="pod-modal-body">
+                    <button class="pod-nav prev" id="podPrev" type="button" aria-label="Previous pod">
+                        <i class="fa fa-chevron-left" aria-hidden="true"></i>
+                    </button>
+                    <div class="pod-img-wrap" id="podImgWrap">
+                        <img id="podImg" src="" alt="">
+                        <div class="pod-hotspots" id="podHotspots"></div>
+                    </div>
+                    <div class="pod-fallback" id="podFallback">
+                        <i class="fa fa-image" aria-hidden="true"></i>
+                        <span>Pod map not uploaded yet.<br>Add the file to your images folder.</span>
+                    </div>
+                    <button class="pod-nav next" id="podNext" type="button" aria-label="Next pod">
+                        <i class="fa fa-chevron-right" aria-hidden="true"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
         <header>
             <h1>Lost and Found Gallery</h1>
             <div class="search-container">
@@ -84,6 +133,9 @@
     </main>
 
     <script src="script.js"></script>
+    <script src="images/floor-maps.js"></script>
+    <script src="images/pod-maps.js"></script>
+    <script src="images/building-map.js"></script>
 
     <footer class="site-footer" role="contentinfo">
         <div class="footer-content">

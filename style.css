@@ -830,6 +830,20 @@ button[onclick^="approve"]:hover {
     stroke: #c0392b;
 }
 
+/* Hallways are one large shape spanning the whole floor, so a fill/outline
+   would tint the entire map. Keep them interactive (tooltip only) with no
+   visual highlight. */
+.floor-svg .hot-hall {
+    cursor: default;
+}
+
+.floor-svg .hot-hall:hover,
+.floor-svg .hot-hall:focus {
+    fill: rgba(0, 0, 0, 0);
+    stroke: rgba(0, 0, 0, 0);
+    outline: none;
+}
+
 /* side arrows */
 .bm-arrow {
     position: absolute;

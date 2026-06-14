@@ -104,9 +104,7 @@
 
   // ----- pod popup -----
   var modal = document.getElementById("podModal");
-  var podImg = document.getElementById("podImg");
   var podWrap = document.getElementById("podImgWrap");
-  var podHotspots = document.getElementById("podHotspots");
   var podTitle = document.getElementById("podTitle");
   var podFallback = document.getElementById("podFallback");
   var POD_MAPS = window.POD_MAPS || {};
@@ -129,43 +127,35 @@
   }
   function loadPod() {
     podTitle.textContent = "Pod " + currentPod;
-    podFallback.style.display = "none";
-    podWrap.style.display = "inline-block";
-    podImg.style.display = "block";
-    podImg.alt = "Map of Pod " + currentPod;
-    podHotspots.innerHTML = "";
-    podImg.src = POD_MAPS[currentPod] ? POD_MAPS[currentPod].img
-                                      : "images/pod-" + currentPod + ".png";
+    var data = POD_MAPS[currentPod];
+    if (data && data.svg) {
+      podFallback.style.display = "none";
+      podWrap.style.display = "block";
+      podWrap.innerHTML = data.svg;
+      wirePodHotspots();
+    } else {
+      podWrap.style.display = "none";
+      podWrap.innerHTML = "";
+      podFallback.style.display = "flex";
+    }
   }
 
-  function buildPodHotspots() {
-    podHotspots.innerHTML = "";
-    var data = POD_MAPS[currentPod];
-    if (!data) return;
-    data.rooms.forEach(function (r) {
-      var d = document.createElement("div");
-      d.className = "pod-room" + (r.pod ? "" : " commons");
-      d.style.left = (r.x * 100) + "%";
-      d.style.top = (r.y * 100) + "%";
-      d.style.width = (r.w * 100) + "%";
-      d.style.height = (r.h * 100) + "%";
-      var label = r.pod ? "Room " + r.label : r.label;
-      d.setAttribute("tabindex", "0");
-      d.setAttribute("aria-label", label);
-      d.addEventListener("mouseenter", function () { showTip(label); });
-      d.addEventListener("mousemove", moveTip);
-      d.addEventListener("mouseleave", hideTip);
-      d.addEventListener("focus", function () { showTip(label); });
-      d.addEventListener("blur", hideTip);
-      podHotspots.appendChild(d);
+  function wirePodHotspots() {
+    var hots = podWrap.querySelectorAll(".pod-hot");
+    Array.prototype.forEach.call(hots, function (h) {
+      var name = h.getAttribute("data-name");
+      var isRoom = !h.classList.contains("commons");
+      var label = isRoom ? "Room " + name : name;
+      h.setAttribute("tabindex", "0");
+      h.setAttribute("role", "img");
+      h.setAttribute("aria-label", label);
+      h.addEventListener("mouseenter", function () { showTip(label); });
+      h.addEventListener("mousemove", moveTip);
+      h.addEventListener("mouseleave", hideTip);
+      h.addEventListener("focus", function () { showTip(label); });
+      h.addEventListener("blur", hideTip);
     });
   }
-
-  podImg.addEventListener("load", buildPodHotspots);
-  podImg.addEventListener("error", function () {
-    podWrap.style.display = "none";
-    podFallback.style.display = "flex";
-  });
 
   function closePod() {
     modal.classList.remove("open");

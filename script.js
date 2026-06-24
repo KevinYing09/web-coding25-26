@@ -1042,3 +1042,16 @@ window.addEventListener('load', () => {
         }
     });
 }());
+
+// Reuses the same in-view fade pattern as your existing .card elements
+
+const introRows = document.querySelectorAll('.intro-row');
+const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+        if (entry.isIntersecting) {
+            entry.target.classList.add('in-view');
+        }
+    });
+}, { threshold: 0.15 });
+
+introRows.forEach(row => observer.observe(row));

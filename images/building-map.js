@@ -75,6 +75,23 @@
         h.addEventListener("keydown", function (e) {
           if (e.key === "Enter" || e.key === " ") { e.preventDefault(); openPod(parseInt(pod, 10), h); }
         });
+      } else if (!h.classList.contains("hot-hall") &&
+                 !h.classList.contains("hot-stairs") &&
+                 !h.classList.contains("hot-restroom")) {
+        // click a room/area to filter the gallery to items found there
+        h.classList.add("is-clickable");
+        h.setAttribute("tabindex", "0");
+        h.setAttribute("role", "button");
+        h.setAttribute("aria-label", "Show items found in " + name);
+        h.addEventListener("click", function () {
+          if (window.filterGalleryByRoom) window.filterGalleryByRoom(name, name);
+        });
+        h.addEventListener("keydown", function (e) {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            if (window.filterGalleryByRoom) window.filterGalleryByRoom(name, name);
+          }
+        });
       }
     });
   }
@@ -116,7 +133,10 @@
     ).filter(function (el) { return el.offsetParent !== null; });
   }
 
-  function openPod(n, trigger) {
+  var pendingPodHighlight = null;
+
+  function openPod(n, trigger, highlightRoom) {
+    pendingPodHighlight = highlightRoom ? String(highlightRoom).toLowerCase() : null;
     lastFocused = trigger || document.activeElement;
     currentPod = n;
     loadPod();
@@ -133,6 +153,19 @@
       podWrap.style.display = "block";
       podWrap.innerHTML = data.svg;
       wirePodHotspots();
+      if (pendingPodHighlight) {
+        var rooms = podWrap.querySelectorAll(".pod-hot");
+        for (var i = 0; i < rooms.length; i++) {
+          if ((rooms[i].getAttribute("data-name") || "").toLowerCase() === pendingPodHighlight) {
+            (function (el) {
+              el.classList.add("locate-pulse");
+              setTimeout(function () { el.classList.remove("locate-pulse"); }, 3200);
+            })(rooms[i]);
+            break;
+          }
+        }
+        pendingPodHighlight = null;
+      }
     } else {
       podWrap.style.display = "none";
       podWrap.innerHTML = "";
@@ -154,6 +187,20 @@
       h.addEventListener("mouseleave", hideTip);
       h.addEventListener("focus", function () { showTip(label); });
       h.addEventListener("blur", hideTip);
+
+      if (isRoom) {
+        // click a pod room to filter the gallery to items found there
+        h.classList.add("is-clickable");
+        h.setAttribute("role", "button");
+        h.setAttribute("aria-label", "Show items found in Room " + name);
+        var filterRoom = function () {
+          if (window.filterGalleryByRoom) { window.filterGalleryByRoom(name, "Room " + name); closePod(); }
+        };
+        h.addEventListener("click", filterRoom);
+        h.addEventListener("keydown", function (e) {
+          if (e.key === "Enter" || e.key === " ") { e.preventDefault(); filterRoom(); }
+        });
+      }
     });
   }
 
@@ -191,6 +238,99 @@
       }
     }
   });
+
+  // ===== Locate-on-map (called from item cards / modal in script.js) =====
+  // Build lookups: area/classroom name -> floor index, pod number -> floor index,
+  // pod room number -> pod number.
+  var NAME_TO_FLOOR = {}, POD_FLOOR = {}, ROOM_TO_POD = {};
+  order.forEach(function (key, fi) {
+    var svg = floors[key].svg, m;
+    var reN = /data-name="([^"]+)"/g;
+    while ((m = reN.exec(svg))) {
+      var nm = m[1].toLowerCase();
+      if (!(nm in NAME_TO_FLOOR)) NAME_TO_FLOOR[nm] = fi;
+    }
+    var reP = /data-pod="(\d+)"/g;
+    while ((m = reP.exec(svg))) { POD_FLOOR[m[1]] = fi; }
+  });
+  Object.keys(POD_MAPS).forEach(function (pn) {
+    var svg = POD_MAPS[pn].svg, m;
+    var re = /class="pod-hot" data-name="([^"]+)"/g; // rooms only (commons carry an extra class)
+    while ((m = re.exec(svg))) { ROOM_TO_POD[m[1].toLowerCase()] = pn; }
+  });
+
+  function scrollMapIntoView() {
+    var sec = document.getElementById("map-section") ||
+              document.querySelector(".building-map-section");
+    if (sec) sec.scrollIntoView({ behavior: "smooth", block: "center" });
+  }
+
+  function pulseEl(el) {
+    if (!el) return;
+    el.classList.remove("locate-pulse");
+    void el.getBoundingClientRect(); // restart the animation
+    el.classList.add("locate-pulse");
+    setTimeout(function () { el.classList.remove("locate-pulse"); }, 3200);
+  }
+
+  function highlightOnFloor(predicate) {
+    var hots = stage.querySelectorAll(".hot");
+    for (var i = 0; i < hots.length; i++) {
+      if (predicate(hots[i])) { pulseEl(hots[i]); return true; }
+    }
+    return false;
+  }
+
+  function toast(msg) {
+    var t = document.createElement("div");
+    t.className = "bm-toast";
+    t.textContent = msg;
+    document.body.appendChild(t);
+    requestAnimationFrame(function () { t.classList.add("show"); });
+    setTimeout(function () {
+      t.classList.remove("show");
+      setTimeout(function () { t.remove(); }, 300);
+    }, 3400);
+  }
+
+  // Turn a free-text location into a canonical target. Shared by locate-on-map
+  // (item -> map) and the gallery filter (map -> items) so both stay in sync.
+  function resolveTarget(rawLoc) {
+    var loc = (rawLoc == null ? "" : String(rawLoc)).trim().toLowerCase().replace(/^room\s+/, "");
+    loc = loc.replace(/\blibrar(?:y|ies)\b/g, "media center").trim(); // library == Media Center
+    if (!loc) return null;
+    if (ROOM_TO_POD[loc]) return { type: "pod", key: loc, pod: ROOM_TO_POD[loc], floor: POD_FLOOR[ROOM_TO_POD[loc]] };
+    if (loc in NAME_TO_FLOOR) return { type: "floor", key: loc, floor: NAME_TO_FLOOR[loc] };
+    var best = null;
+    Object.keys(NAME_TO_FLOOR).forEach(function (nm) {
+      if (nm.length < 3) return;
+      if (loc.indexOf(nm) !== -1 || nm.indexOf(loc) !== -1) { if (!best || nm.length > best.length) best = nm; }
+    });
+    if (best) return { type: "floor", key: best, floor: NAME_TO_FLOOR[best] };
+    return null;
+  }
+
+  // Exposed: free-text location -> canonical key (or null). Used by the gallery.
+  window.resolveLocation = function (raw) { var t = resolveTarget(raw); return t ? t.key : null; };
+
+  window.locateOnMap = function (rawLoc) {
+    var loc = (rawLoc == null ? "" : String(rawLoc)).trim();
+    if (!loc) { toast("No location was recorded for this item."); return false; }
+    scrollMapIntoView();
+    var t = resolveTarget(loc);
+    if (!t) { toast('Couldn’t find "' + loc + '" on the map.'); return false; }
+    if (t.type === "pod") {
+      if (t.floor != null) {
+        goToFloor(t.floor);
+        highlightOnFloor(function (h) { return h.getAttribute("data-pod") === t.pod; });
+      }
+      setTimeout(function () { openPod(parseInt(t.pod, 10), null, t.key); }, 450);
+      return true;
+    }
+    goToFloor(t.floor);
+    highlightOnFloor(function (h) { return (h.getAttribute("data-name") || "").toLowerCase() === t.key; });
+    return true;
+  };
 
   renderFloor();
 })();

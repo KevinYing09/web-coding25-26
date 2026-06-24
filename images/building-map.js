@@ -54,6 +54,7 @@
     });
 
     wireHotspots();
+    resetZoom();
   }
 
   function wireHotspots() {
@@ -275,10 +276,11 @@
 
   function highlightOnFloor(predicate) {
     var hots = stage.querySelectorAll(".hot");
+    var found = false;
     for (var i = 0; i < hots.length; i++) {
-      if (predicate(hots[i])) { pulseEl(hots[i]); return true; }
+      if (predicate(hots[i])) { pulseEl(hots[i]); found = true; }
     }
-    return false;
+    return found;
   }
 
   function toast(msg) {
@@ -331,6 +333,86 @@
     highlightOnFloor(function (h) { return (h.getAttribute("data-name") || "").toLowerCase() === t.key; });
     return true;
   };
+
+  // ===== Map zoom & pan (scales only the map, not the page) =====
+  var zScale = 1, zTx = 0, zTy = 0;
+
+  function applyZoom() {
+    var s = stage.querySelector("svg");
+    if (!s) return;
+    s.style.transformOrigin = "0 0";
+    s.style.transform = "translate(" + zTx + "px," + zTy + "px) scale(" + zScale + ")";
+    stage.style.touchAction = zScale > 1 ? "none" : "pan-y";
+  }
+  function clampPan() {
+    var w = stage.clientWidth, h = stage.clientHeight;
+    if (zScale <= 1) { zTx = 0; zTy = 0; return; }
+    zTx = Math.min(0, Math.max(w - w * zScale, zTx));
+    zTy = Math.min(0, Math.max(h - h * zScale, zTy));
+  }
+  function zoomAt(factor, clientX, clientY) {
+    var r = stage.getBoundingClientRect();
+    var cx = (clientX == null ? r.width / 2 : clientX - r.left);
+    var cy = (clientY == null ? r.height / 2 : clientY - r.top);
+    var ns = Math.min(5, Math.max(1, zScale * factor));
+    if (ns === zScale) return;
+    zTx = cx - (ns / zScale) * (cx - zTx);
+    zTy = cy - (ns / zScale) * (cy - zTy);
+    zScale = ns;
+    clampPan();
+    applyZoom();
+  }
+  function resetZoom() { zScale = 1; zTx = 0; zTy = 0; applyZoom(); }
+
+  document.getElementById("bmZoomIn").addEventListener("click", function () { zoomAt(1.4); });
+  document.getElementById("bmZoomOut").addEventListener("click", function () { zoomAt(1 / 1.4); });
+  document.getElementById("bmZoomReset").addEventListener("click", resetZoom);
+
+  var panning = false, sx = 0, sy = 0, tx0 = 0, ty0 = 0, pinchD = 0;
+  stage.addEventListener("touchstart", function (e) {
+    if (e.touches.length === 2) {
+      var a = e.touches[0], b = e.touches[1];
+      pinchD = Math.hypot(b.clientX - a.clientX, b.clientY - a.clientY);
+      panning = false;
+      e.preventDefault();
+    } else if (e.touches.length === 1 && zScale > 1) {
+      panning = true; sx = e.touches[0].clientX; sy = e.touches[0].clientY; tx0 = zTx; ty0 = zTy;
+    }
+  }, { passive: false });
+  stage.addEventListener("touchmove", function (e) {
+    if (e.touches.length === 2 && pinchD) {
+      e.preventDefault();
+      var a = e.touches[0], b = e.touches[1];
+      var d = Math.hypot(b.clientX - a.clientX, b.clientY - a.clientY);
+      zoomAt(d / pinchD, (a.clientX + b.clientX) / 2, (a.clientY + b.clientY) / 2);
+      pinchD = d;
+    } else if (panning && e.touches.length === 1) {
+      var dx = e.touches[0].clientX - sx, dy = e.touches[0].clientY - sy;
+      if (Math.abs(dx) + Math.abs(dy) > 6) e.preventDefault();
+      zTx = tx0 + dx; zTy = ty0 + dy; clampPan(); applyZoom();
+    }
+  }, { passive: false });
+  stage.addEventListener("touchend", function (e) {
+    if (e.touches.length < 2) pinchD = 0;
+    if (e.touches.length === 0) panning = false;
+  });
+
+  // mouse drag-to-pan when zoomed (desktop)
+  var dragMoved = false;
+  stage.addEventListener("mousedown", function (e) {
+    if (zScale <= 1) return;
+    panning = true; dragMoved = false; sx = e.clientX; sy = e.clientY; tx0 = zTx; ty0 = zTy; e.preventDefault();
+  });
+  window.addEventListener("mousemove", function (e) {
+    if (!panning) return;
+    if (Math.abs(e.clientX - sx) + Math.abs(e.clientY - sy) > 4) dragMoved = true;
+    zTx = tx0 + (e.clientX - sx); zTy = ty0 + (e.clientY - sy); clampPan(); applyZoom();
+  });
+  window.addEventListener("mouseup", function () { panning = false; });
+  // swallow the click that ends a drag so it doesn't open a pod / filter
+  stage.addEventListener("click", function (e) {
+    if (dragMoved) { e.stopPropagation(); e.preventDefault(); dragMoved = false; }
+  }, true);
 
   renderFloor();
 })();

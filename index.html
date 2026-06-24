@@ -30,25 +30,93 @@
         </ul>
     </nav>
 
+    <section class="intro-section" aria-label="About the Lost and Found gallery">
+        
+        <div class="intro-heading">
+            <div class="intro-heading-bg" style="background-image: url('images/skyline-birdseye.jpg');"></div>
+            <div class="intro-heading-content">
+                <span class="ih-eyebrow">Skyline High School</span>
+                <h1 class="ih-title">
+                    <span class="ih-title-light">Lost Something?</span>
+                    <span class="ih-title-bold">Found Something?</span>
+                </h1>
+                <p class="ih-subtitle">Browse recently found items, or report something you've lost. Every item below was turned in by a student or staff member just like you.</p>
+            </div>
+            <div class="custom-shape-divider-bottom-1782209749">
+                <svg data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 120" preserveAspectRatio="none">
+                    <path d="M598.97 114.72L0 0 0 120 1200 120 1200 0 598.97 114.72z" class="shape-fill"></path>
+                </svg>
+            </div>
+        </div>
+
+        <!-- Row 1: image left, text right -->
+        <div class="intro-row">
+            <div class="intro-img">
+                <img src="images/sample-found-1.jpg" alt="Black backpack found near the gym entrance">
+            </div>
+            <div class="intro-text">
+                <span class="intro-tag">Found Item Gallery</span>
+                <h2>Items Are Logged Daily</h2>
+                <p>Every item turned in to the Main Office is photographed and added to the gallery within 24 hours, so you can check back often without making a trip across campus.</p>
+                <a href="#search-section" class="intro-btn">Browse All Items</a>
+            </div>
+            <div class="custom-shape-divider-top-1782209636">
+                <svg data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 120" preserveAspectRatio="none">
+                    <path d="M1200 0L0 0 598.97 114.72 1200 0z" class="shape-fill"></path>
+                </svg>
+            </div>
+        </div>
+
+        <!-- Row 2: text left, image right (reverse) -->
+        <div class="intro-row reverse">
+            <div class="intro-img">
+                <img src="images/sample-found-2.jpg" alt="Blue water bottle with stickers found in the cafeteria">
+            </div>
+            <div class="intro-text">
+                <span class="intro-tag">Map</span>
+                <h2>Where is where?</h2>
+                <p>Need help remembering which room is which? Use our interactive map to inspect all four floors and identify where your items are.</p>
+                <a href="#map-section" class="intro-btn">Search in Skyline</a>
+            </div>
+        </div>
+
+        <!-- Row 3: image left, text right -->
+        <div class="intro-row">
+            <div class="intro-img">
+                <img src="images/sample-found-3.jpg" alt="Found jacket hanging on a hook in the main office">
+            </div>
+            <div class="intro-text">
+                <span class="intro-tag">Lost Items</span>
+                <h2>Found Something? Report It</h2>
+                <p>If you found an item on campus, fill out a short form with a photo and description so we can reunite it with its owner as quickly as possible.</p>
+                <a href="report.html" class="intro-btn">Report an Item</a>
+            </div>
+        </div>
+
+    </section>
+    
     <main id="main-content">
         <!-- ── INTERACTIVE BUILDING MAP ───────────────────────────── -->
-        <section class="building-map-section" aria-label="Interactive school building map">
-            <div class="bm-head">
-                <h2>Explore the Building</h2>
-                <p>Hover an area to see what it is. Click a pod to open its map. Use the arrows to change floors.</p>
-            </div>
-            <div class="bm-floor-label" id="bmFloorLabel"></div>
-            <div class="bm-stage-wrap">
-                <button class="bm-arrow left" id="bmPrev" type="button" aria-label="Previous floor">
-                    <i class="fa fa-chevron-left" aria-hidden="true"></i>
-                </button>
-                <div class="bm-stage" id="bmStage"></div>
-                <button class="bm-arrow right" id="bmNext" type="button" aria-label="Next floor">
-                    <i class="fa fa-chevron-right" aria-hidden="true"></i>
-                </button>
-            </div>
-            <div class="bm-tabs" id="bmTabs"></div>
-        </section>
+         <div id="map-section">
+            <h1>Skyline Map </h1>
+            <section class="building-map-section" aria-label="Interactive school building map">
+                <div class="bm-head">
+                    <h2>Explore the Building</h2>
+                    <p>Hover an area to see what it is. Click a pod to open its map. Use the arrows to change floors.</p>
+                </div>
+                <div class="bm-floor-label" id="bmFloorLabel"></div>
+                <div class="bm-stage-wrap">
+                    <button class="bm-arrow left" id="bmPrev" type="button" aria-label="Previous floor">
+                        <i class="fa fa-chevron-left" aria-hidden="true"></i>
+                    </button>
+                    <div class="bm-stage" id="bmStage"></div>
+                    <button class="bm-arrow right" id="bmNext" type="button" aria-label="Next floor">
+                        <i class="fa fa-chevron-right" aria-hidden="true"></i>
+                    </button>
+                </div>
+                <div class="bm-tabs" id="bmTabs"></div>
+            </section>
+        </div>
 
         <div class="bm-tooltip" id="bmTooltip" aria-hidden="true"></div>
 
@@ -77,7 +145,7 @@
             </div>
         </div>
 
-        <header>
+        <header id="search-section">
             <h1>Lost and Found Gallery</h1>
             <div class="search-container">
                 <label for="searchInput" class="sr-only">Search items</label>
@@ -133,6 +201,47 @@
     <script src="images/floor-maps.js"></script>
     <script src="images/pod-maps.js"></script>
     <script src="images/building-map.js"></script>
+
+
+    <div class="curve-wrapper">
+        <section>
+            <div class="custom-shape-divider-top-1782204692">
+                <svg data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 120" preserveAspectRatio="none">
+                    <path d="M0,0V46.29c47.79,22.2,103.59,32.17,158,28,70.36-5.37,136.33-33.31,206.8-37.5C438.64,32.43,512.34,53.67,583,72.05c69.27,18,138.3,24.88,209.4,13.08,36.15-6,69.85-17.84,104.45-29.34C989.49,25,1113-14.29,1200,52.47V0Z" opacity=".25" class="shape-fill"></path>
+                    <path d="M0,0V15.81C13,36.92,27.64,56.86,47.69,72.05,99.41,111.27,165,111,224.58,91.58c31.15-10.15,60.09-26.07,89.67-39.8,40.92-19,84.73-46,130.83-49.67,36.26-2.85,70.9,9.42,98.6,31.56,31.77,25.39,62.32,62,103.63,73,40.44,10.79,81.35-6.69,119.13-24.28s75.16-39,116.92-43.05c59.73-5.85,113.28,22.88,168.9,38.84,30.2,8.66,59,6.17,87.09-7.5,22.43-10.89,48-26.93,60.65-49.24V0Z" opacity=".5" class="shape-fill"></path>
+                    <path d="M0,0V5.63C149.93,59,314.09,71.32,475.83,42.57c43-7.64,84.23-20.12,127.61-26.46,59-8.63,112.48,12.24,165.56,35.4C827.93,77.22,886,95.24,951.2,90c86.53-7,172.46-45.71,248.8-84.81V0Z" class="shape-fill"></path>
+                </svg>
+            </div>
+        <!-- </section>
+        <section class="blue">
+            <h1>Nice Curves</h1>
+            <p>Beatae facilis voluptate quo veniam soluta vero ratione libero dolore atque error eaque maiores molestias in, dolorum necessitatibus deleniti consequuntur ex nobis dicta eveniet. Debitis temporibus reprehenderit vel odit placeat!</p>
+        </section>
+        <section class="pink">
+            <h1>Nice Curves</h1>
+            <p>Sunt laboriosam, voluptates earum labore illo nostrum dicta ducimus molestias alias accusamus qui officia veritatis optio impedit eum aperiam possimus cum delectus sit quis totam odio fuga quod vitae. Praesentium?</p>
+        </section>
+        <section>
+            <h1>Nice Curves</h1>
+            <p>Ea iure, deleniti debitis magni quaerat temporibus omnis praesentium tenetur voluptates, beatae quas ut optio. Odio saepe facere, velit sed ipsam earum? Saepe culpa voluptates pariatur nemo voluptatum nihil. Neque.</p>
+        </section>
+        <section>
+            <h1>Nice Curves</h1>
+            <p>Facere dolorum sunt, maxime deserunt ipsa similique quisquam doloribus repellendus, nulla dicta a. Esse, iste? Temporibus est eaque at ullam, impedit molestiae modi dolor quam dolorem, eum quisquam pariatur repellendus!</p>
+        </section>
+        <section>
+            <h1>Nice Curves</h1>
+            <p>Deserunt harum nihil odio voluptates recusandae repellat dolores doloremque repudiandae soluta. Nobis obcaecati quod, cum sequi voluptatibus illum? Doloribus accusamus nulla vel ratione quia dolorum illum quaerat nesciunt expedita. Cupiditate.</p>
+        </section>
+        <section>
+            <h1>Nice Curves</h1>
+            <p>Voluptate consequatur atque accusamus dolores? Unde commodi similique iste dolor non? Distinctio provident inventore quo, quam error labore dolore dolor nobis accusantium debitis temporibus dolorem aut? Sed, a. Facere, voluptatum.</p>
+        </section>
+        <section>
+            <h1>Nice Curves</h1>
+            <p>Maxime aut numquam ab porro adipisci molestias rerum debitis omnis, excepturi voluptate ex ipsa laudantium nihil sunt provident dolores asperiores, repellat amet similique iste temporibus inventore? Quasi dolorem modi corporis.</p>
+        </section> -->
+    </div> 
 
     <footer class="site-footer" role="contentinfo">
         <div class="footer-content">

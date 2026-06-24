@@ -4,6 +4,53 @@ const AI_MATCH_URL = 'https://ai-key.kevin-ying-ut.workers.dev/';
 // Stores the IDs returned by the last AI search (null = no AI search active)
 let aiMatchResults = null; // [{ id, reason }] or null
 
+// Reverse map filter: when set, only items found in this room/area are shown
+let mapRoomFilter = null;   // canonical location key (lowercased) or null
+let mapRoomLabel  = '';     // human-readable label for the banner
+
+// Called by the building map (building-map.js) when a room is clicked
+window.filterGalleryByRoom = function (roomName, label) {
+    const key = window.resolveLocation ? window.resolveLocation(roomName) : null;
+    mapRoomFilter = key || String(roomName || '').toLowerCase().trim();
+    mapRoomLabel  = label || roomName || '';
+    showMapFilterBanner(mapRoomLabel);
+    refreshCardVisibility();
+    const grid = document.getElementById('itemsGrid');
+    if (grid) grid.scrollIntoView({ behavior: 'smooth', block: 'start' });
+};
+
+window.clearMapRoomFilter = function () {
+    mapRoomFilter = null;
+    mapRoomLabel  = '';
+    const banner = document.getElementById('mapFilterBanner');
+    if (banner) banner.remove();
+    refreshCardVisibility();
+};
+
+function showMapFilterBanner(label) {
+    const grid = document.getElementById('itemsGrid');
+    if (!grid) return;
+    let banner = document.getElementById('mapFilterBanner');
+    if (!banner) {
+        banner = document.createElement('div');
+        banner.id = 'mapFilterBanner';
+        banner.className = 'map-filter-banner';
+        grid.parentNode.insertBefore(banner, grid);
+    }
+    banner.innerHTML = '';
+    const text = document.createElement('span');
+    text.innerHTML = '<i class="fa fa-map-marker" aria-hidden="true"></i> Showing items found in: ';
+    const strong = document.createElement('strong');
+    strong.textContent = label;
+    text.appendChild(strong);
+    const clearBtn = document.createElement('button');
+    clearBtn.type = 'button';
+    clearBtn.className = 'map-filter-clear';
+    clearBtn.innerHTML = '<i class="fa fa-times" aria-hidden="true"></i> Clear';
+    clearBtn.addEventListener('click', () => window.clearMapRoomFilter());
+    banner.append(text, clearBtn);
+}
+
 async function findAIMatches() {
     const descInput = document.getElementById('aiDescInput');
     const resultsDiv = document.getElementById('aiResults');
@@ -115,7 +162,18 @@ function refreshCardVisibility() {
         const itemCategory    = card.dataset.category || '';
         const matchesSearch   = itemName.includes(searchTerm);
         const matchesCategory = (selectedCategory === 'all' || itemCategory === selectedCategory);
-        const passesFilter    = matchesSearch && matchesCategory;
+
+        // Reverse map filter: only items found in the clicked room
+        let matchesMapRoom = true;
+        if (mapRoomFilter) {
+            if (window.resolveLocation) {
+                matchesMapRoom = (window.resolveLocation(card.dataset.location || '') === mapRoomFilter);
+            } else {
+                matchesMapRoom = (card.dataset.location || '').toLowerCase().includes(mapRoomFilter);
+            }
+        }
+
+        const passesFilter    = matchesSearch && matchesCategory && matchesMapRoom;
 
         if (!passesFilter) {
             card.style.display = 'none';
@@ -140,8 +198,9 @@ function refreshCardVisibility() {
                 badge.innerHTML = '<i class="fa fa-magic" style="margin-right:5px;"></i>';
                 badge.appendChild(document.createTextNode(match.reason));
             } else {
+                // AI search active but this item isn't a match — hide it entirely
+                card.style.display = 'none';
                 card.style.outline = 'none';
-                card.style.opacity = '0.35';
                 const badge = card.querySelector('.ai-match-badge');
                 if (badge) badge.remove();
             }
@@ -175,7 +234,13 @@ function refreshCardVisibility() {
             heading.textContent = 'No items found';
 
             const msg = document.createElement('p');
-            if (searchTerm) {
+            if (mapRoomFilter) {
+                msg.appendChild(document.createTextNode('No items have been found in “'));
+                const strong = document.createElement('strong');
+                strong.textContent = mapRoomLabel || mapRoomFilter;
+                msg.appendChild(strong);
+                msg.appendChild(document.createTextNode('” yet.'));
+            } else if (searchTerm) {
                 msg.appendChild(document.createTextNode('No results for “'));
                 const strong = document.createElement('strong');
                 strong.textContent = searchTerm;
@@ -444,6 +509,7 @@ if (itemsGrid) {
               card.setAttribute('aria-label', 'View details for ' + item.name);
               card.dataset.category = item.category;
               card.dataset.itemId   = doc.id;
+              card.dataset.location = item.location || '';
 
               // Category colour map
               const categoryColors = {
@@ -503,7 +569,16 @@ if (itemsGrid) {
               btn.setAttribute('aria-label', 'Inquire about ' + item.name);
               btn.addEventListener('click', (ev) => { ev.stopPropagation(); claimItem(doc.id); });
 
-              cardContent.append(h3, loc, btn);
+              const locateBtn = document.createElement('button');
+              locateBtn.className = 'locate-btn';
+              locateBtn.innerHTML = '<i class="fa fa-map-marker" aria-hidden="true"></i> Locate on map';
+              locateBtn.setAttribute('aria-label', 'Locate ' + item.name + ' on the building map');
+              locateBtn.addEventListener('click', (ev) => {
+                  ev.stopPropagation();
+                  if (window.locateOnMap) window.locateOnMap(item.location);
+              });
+
+              cardContent.append(h3, loc, btn, locateBtn);
               card.append(imgWrapper, cardContent);
 
               card.addEventListener('click', () => openModal(images, item.name, item.location, item.description, doc.id, imagesFull));
@@ -697,13 +772,19 @@ function openModal(images, name, loc, desc, id, imagesFull) {
     claimBtn.style.cssText = 'width:100%; padding:15px; color:white; border:none; border-radius:8px; font-size:1.1rem; font-weight:bold; cursor:pointer;';
     claimBtn.addEventListener('click', () => claimItem(id));
 
+    const locateBtnM = document.createElement('button');
+    locateBtnM.innerHTML = '<i class="fa fa-map-marker"></i> Locate on map';
+    locateBtnM.setAttribute('aria-label', 'Locate ' + name + ' on the building map');
+    locateBtnM.style.cssText = 'width:100%; padding:12px; margin-top:10px; background:#16a085; color:white; border:none; border-radius:8px; font-size:1rem; font-weight:bold; cursor:pointer;';
+    locateBtnM.addEventListener('click', () => { closeModal(); if (window.locateOnMap) window.locateOnMap(loc); });
+
     const closeBtn = document.createElement('button');
     closeBtn.innerHTML = '<i class="fa fa-times"></i> Close';
     closeBtn.setAttribute('aria-label', 'Close modal');
     closeBtn.style.cssText = 'width:100%; padding:10px; margin-top:10px; background:#95a5a6; color:white; border:none; border-radius:8px; font-size:1rem; cursor:pointer;';
     closeBtn.addEventListener('click', closeModal);
 
-    body.append(title, details, hr, claimBtn, closeBtn);
+    body.append(title, details, hr, claimBtn, locateBtnM, closeBtn);
     content.appendChild(body);
     modal.appendChild(content);
 

@@ -806,7 +806,34 @@
         display: flex;
         align-items: center;
         justify-content: center;
+        overflow: hidden;            /* clip the map when zoomed in */
+        touch-action: pan-y;         /* allow page scroll until zoomed */
     }
+
+    /* zoom controls — their own row below the map, never overlapping it */
+    .bm-zoom {
+        display: flex;
+        justify-content: center;
+        gap: 8px;
+        margin-top: 10px;
+    }
+
+    .bm-zoom button {
+        width: 36px;
+        height: 36px;
+        border: none;
+        border-radius: 8px;
+        background: var(--primary);
+        color: #fff;
+        font-size: 1rem;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.22);
+    }
+
+    .bm-zoom button:hover { background: var(--accent) !important; }
 
     .floor-svg {
         width: 100%;
@@ -841,6 +868,7 @@
         fill: rgba(252, 163, 17, 0.55);
         stroke: #c0392b;
     }
+
 
     /* Hallways are one large shape spanning the whole floor, so a fill/outline
     would tint the entire map. Keep them interactive (tooltip only) with no

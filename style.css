@@ -1021,6 +1021,88 @@
         border-radius: 8px;
     }
 
+    /* ── LOCATE-ON-MAP HIGHLIGHT ─────────────────────────────────────────────── */
+    @keyframes bmLocatePulse {
+        0%, 100% { fill: rgba(231, 76, 60, 0); stroke: rgba(231, 76, 60, 0); }
+        50%      { fill: rgba(231, 76, 60, 0.55); stroke: #c0392b; }
+    }
+
+    .floor-svg .hot.locate-pulse,
+    .pod-svg .pod-hot.locate-pulse {
+        animation: bmLocatePulse 0.85s ease-in-out 3;
+        stroke-width: 4;
+    }
+
+    /* clickable rooms/areas filter the gallery */
+    .floor-svg .hot.is-clickable,
+    .pod-svg .pod-hot.is-clickable {
+        cursor: pointer;
+    }
+
+    /* banner shown above the gallery when a room filter is active */
+    .map-filter-banner {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        flex-wrap: wrap;
+        background: #eafaf1;
+        border: 1px solid #2ecc71;
+        color: #1e8449;
+        padding: 10px 16px;
+        border-radius: 8px;
+        margin: 16px 0 0;
+        font-size: 0.95rem;
+    }
+
+    .map-filter-banner strong { color: #145a32; }
+
+    .map-filter-clear {
+        background: #2ecc71;
+        color: #fff;
+        border: none;
+        padding: 6px 12px;
+        border-radius: 6px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        cursor: pointer;
+        white-space: nowrap;
+    }
+
+    .map-filter-clear:hover { background: #27ae60 !important; }
+
+    /* "Locate on map" button on item cards */
+    .locate-btn {
+        background: #16a085;
+        display: block;
+        margin-top: 8px;
+    }
+
+    .locate-btn:hover { background: #138d75 !important; }
+
+    /* transient toast for unmatched locations */
+    .bm-toast {
+        position: fixed;
+        left: 50%;
+        bottom: 28px;
+        transform: translateX(-50%) translateY(10px);
+        background: #2c3e50;
+        color: #fff;
+        padding: 12px 20px;
+        border-radius: 8px;
+        font-size: 0.95rem;
+        font-weight: 600;
+        box-shadow: 0 6px 18px rgba(0, 0, 0, 0.25);
+        z-index: 4000;
+        opacity: 0;
+        transition: opacity 0.25s ease, transform 0.25s ease;
+        pointer-events: none;
+        max-width: 90vw;
+        text-align: center;
+    }
+
+    .bm-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
     /* room hotspots inside the vector pod map */
     .pod-svg .pod-hot {
         fill: rgba(0, 0, 0, 0);

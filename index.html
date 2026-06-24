@@ -114,6 +114,12 @@
                         <i class="fa fa-chevron-right" aria-hidden="true"></i>
                     </button>
                 </div>
+                <div class="bm-zoom">
+                    <button id="bmZoomIn" type="button" aria-label="Zoom in"><i class="fa fa-plus" aria-hidden="true"></i></button>
+                    <button id="bmZoomOut" type="button" aria-label="Zoom out"><i class="fa fa-minus" aria-hidden="true"></i></button>
+                    <button id="bmZoomReset" type="button" aria-label="Reset zoom"><i class="fa fa-compress" aria-hidden="true"></i></button>
+                </div>
+                <br>
                 <div class="bm-tabs" id="bmTabs"></div>
             </section>
         </div>
@@ -188,12 +194,6 @@
         </header>
 
         <section id="itemsGrid" class="grid"></section>
-
-        <!--
-            #itemModal is intentionally empty here.
-            openModal() in script.js builds its contents dynamically using DOM
-            methods (no innerHTML with user data) to prevent XSS.
-        -->
         <div id="itemModal" class="modal-overlay"></div>
     </main>
 
@@ -212,35 +212,6 @@
                     <path d="M0,0V5.63C149.93,59,314.09,71.32,475.83,42.57c43-7.64,84.23-20.12,127.61-26.46,59-8.63,112.48,12.24,165.56,35.4C827.93,77.22,886,95.24,951.2,90c86.53-7,172.46-45.71,248.8-84.81V0Z" class="shape-fill"></path>
                 </svg>
             </div>
-        <!-- </section>
-        <section class="blue curvy">
-            <h1>Nice Curves</h1>
-            <p>Beatae facilis voluptate quo veniam soluta vero ratione libero dolore atque error eaque maiores molestias in, dolorum necessitatibus deleniti consequuntur ex nobis dicta eveniet. Debitis temporibus reprehenderit vel odit placeat!</p>
-        </section>
-        <section class="pink curvy">
-            <h1>Nice Curves</h1>
-            <p>Sunt laboriosam, voluptates earum labore illo nostrum dicta ducimus molestias alias accusamus qui officia veritatis optio impedit eum aperiam possimus cum delectus sit quis totam odio fuga quod vitae. Praesentium?</p>
-        </section>
-        <section class="curvy">
-            <h1>Nice Curves</h1>
-            <p>Ea iure, deleniti debitis magni quaerat temporibus omnis praesentium tenetur voluptates, beatae quas ut optio. Odio saepe facere, velit sed ipsam earum? Saepe culpa voluptates pariatur nemo voluptatum nihil. Neque.</p>
-        </section>
-        <section class="curvy">
-            <h1>Nice Curves</h1>
-            <p>Facere dolorum sunt, maxime deserunt ipsa similique quisquam doloribus repellendus, nulla dicta a. Esse, iste? Temporibus est eaque at ullam, impedit molestiae modi dolor quam dolorem, eum quisquam pariatur repellendus!</p>
-        </section>
-        <section class="curvy">
-            <h1>Nice Curves</h1>
-            <p>Deserunt harum nihil odio voluptates recusandae repellat dolores doloremque repudiandae soluta. Nobis obcaecati quod, cum sequi voluptatibus illum? Doloribus accusamus nulla vel ratione quia dolorum illum quaerat nesciunt expedita. Cupiditate.</p>
-        </section>
-        <section class="curvy">
-            <h1>Nice Curves</h1>
-            <p>Voluptate consequatur atque accusamus dolores? Unde commodi similique iste dolor non? Distinctio provident inventore quo, quam error labore dolore dolor nobis accusantium debitis temporibus dolorem aut? Sed, a. Facere, voluptatum.</p>
-        </section>
-        <section class="curvy">
-            <h1>Nice Curves</h1>
-            <p>Maxime aut numquam ab porro adipisci molestias rerum debitis omnis, excepturi voluptate ex ipsa laudantium nihil sunt provident dolores asperiores, repellat amet similique iste temporibus inventore? Quasi dolorem modi corporis.</p>
-        </section> -->
     </div> 
 
     <footer class="site-footer" role="contentinfo">

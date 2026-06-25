@@ -565,6 +565,7 @@ if (itemsGrid) {
               loc.innerHTML = '<i class="fa fa-map-marker"></i> ' + item.location;
 
               const btn = document.createElement('button');
+              btn.className = 'claim-btn';
               btn.textContent = 'Inquire / Claim';
               btn.setAttribute('aria-label', 'Inquire about ' + item.name);
               btn.addEventListener('click', (ev) => { ev.stopPropagation(); claimItem(doc.id); });

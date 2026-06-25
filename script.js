@@ -1136,3 +1136,41 @@ const observer = new IntersectionObserver((entries) => {
 }, { threshold: 0.15 });
 
 introRows.forEach(row => observer.observe(row));
+
+// ─── 10. HIGH CONTRAST MODE ──────────────────────────────────────────────────
+(function () {
+    const KEY = 'highContrast';
+    const isOn = () => document.body.classList.contains('high-contrast');
+
+    function syncButton() {
+        const btn = document.getElementById('contrastToggle');
+        if (!btn) return;
+        btn.setAttribute('aria-pressed', String(isOn()));
+        const label = btn.querySelector('.contrast-toggle-label');
+        if (label) label.textContent = 'High contrast: ' + (isOn() ? 'On' : 'Off');
+    }
+
+    function setMode(on) {
+        document.body.classList.toggle('high-contrast', on);
+        try { localStorage.setItem(KEY, on ? 'on' : 'off'); } catch (e) {}
+        syncButton();
+    }
+
+    // Apply the saved preference immediately
+    let saved = false;
+    try { saved = localStorage.getItem(KEY) === 'on'; } catch (e) {}
+    document.body.classList.toggle('high-contrast', saved);
+
+    // The button is parsed after this script runs, so delegate the click
+    document.addEventListener('click', (e) => {
+        const btn = e.target.closest && e.target.closest('#contrastToggle');
+        if (btn) setMode(!isOn());
+    });
+
+    // Update the button's label/state once the footer exists
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', syncButton);
+    } else {
+        syncButton();
+    }
+})();

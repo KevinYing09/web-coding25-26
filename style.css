@@ -749,6 +749,79 @@
         outline-offset: 2px;
     }
 
+    /* ── HIGH CONTRAST TOGGLE BUTTON (in footer) ───────────────────────────── */
+    .contrast-toggle {
+        background: transparent;
+        color: #ecf0f1;
+        border: 2px solid #ecf0f1;
+        padding: 8px 14px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 0.9rem;
+        font-weight: 600;
+    }
+
+    .contrast-toggle:hover { background: rgba(255, 255, 255, 0.15) !important; }
+    .contrast-toggle[aria-pressed="true"] { background: #f1c40f; color: #000; border-color: #f1c40f; }
+
+    /* ── HIGH CONTRAST MODE ─────────────────────────────────────────────────
+       Applied when <body> has .high-contrast. !important overrides the inline
+       colours set by the JS-built cards and modal. */
+    body.high-contrast { background: #000 !important; }
+
+    body.high-contrast,
+    body.high-contrast h1, body.high-contrast h2, body.high-contrast h3,
+    body.high-contrast h4, body.high-contrast p, body.high-contrast span,
+    body.high-contrast li, body.high-contrast strong, body.high-contrast label,
+    body.high-contrast td, body.high-contrast th {
+        color: #fff !important;
+    }
+
+    body.high-contrast a { color: #ff0 !important; text-decoration: underline !important; }
+
+    body.high-contrast nav { background: #000 !important; border-bottom: 2px solid #fff !important; }
+    body.high-contrast nav a, body.high-contrast .navbar li a { color: #fff !important; }
+
+    body.high-contrast main,
+    body.high-contrast .intro-section,
+    body.high-contrast section,
+    body.high-contrast .building-map-section { background: #000 !important; }
+
+    body.high-contrast .card,
+    body.high-contrast .modal-content,
+    body.high-contrast .ai-panel,
+    body.high-contrast table {
+        background: #000 !important;
+        border: 2px solid #fff !important;
+    }
+
+    body.high-contrast input,
+    body.high-contrast select,
+    body.high-contrast textarea {
+        background: #000 !important;
+        color: #fff !important;
+        border: 2px solid #fff !important;
+    }
+
+    body.high-contrast button,
+    body.high-contrast .intro-btn,
+    body.high-contrast .custom-file-upload {
+        background: #000 !important;
+        color: #ff0 !important;
+        border: 2px solid #ff0 !important;
+    }
+
+    body.high-contrast button:hover,
+    body.high-contrast .intro-btn:hover {
+        background: #ff0 !important;
+        color: #000 !important;
+    }
+
+    body.high-contrast .site-footer { background: #000 !important; border-top: 2px solid #fff !important; }
+    body.high-contrast .footer-section h3 { color: #ff0 !important; }
+
+    body.high-contrast :focus { outline: 3px solid #ff0 !important; outline-offset: 2px !important; }
+
     /* ── INTERACTIVE BUILDING MAP ───────────────────────────────────────────────── */
 
     #map-section{

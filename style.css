@@ -178,6 +178,13 @@
 
     .card-content { padding: 15px; }
 
+    /* make the Claim and Locate buttons identical size in the gallery cards */
+    .card-content button {
+        display: block;
+        width: 100%;
+        box-sizing: border-box;
+    }
+
     .card:hover img {
         transform: scale(1.08);
     }
@@ -1174,7 +1181,7 @@
 
     /* "Locate on map" button on item cards */
     .locate-btn {
-        background: #16a085;
+        background: #2C3E50;
         display: block;
         margin-top: 8px;
     }

@@ -768,15 +768,17 @@ function openModal(images, name, loc, desc, id, imagesFull) {
 
     const claimBtn = document.createElement('button');
     claimBtn.id          = 'claim-btn-large';
+    claimBtn.className   = 'claim-btn';
     claimBtn.textContent = 'Inquire / Claim';
     claimBtn.setAttribute('aria-label', 'Inquire or Claim ' + name);
     claimBtn.style.cssText = 'width:100%; padding:15px; color:white; border:none; border-radius:8px; font-size:1.1rem; font-weight:bold; cursor:pointer;';
     claimBtn.addEventListener('click', () => claimItem(id));
 
     const locateBtnM = document.createElement('button');
+    locateBtnM.className = 'locate-btn';
     locateBtnM.innerHTML = '<i class="fa fa-map-marker"></i> Locate on map';
     locateBtnM.setAttribute('aria-label', 'Locate ' + name + ' on the building map');
-    locateBtnM.style.cssText = 'width:100%; padding:12px; margin-top:10px; background:#16a085; color:white; border:none; border-radius:8px; font-size:1rem; font-weight:bold; cursor:pointer;';
+    locateBtnM.style.cssText = 'width:100%; padding:12px; margin-top:10px; background:#2c3e50; color:white; border:none; border-radius:8px; font-size:1rem; font-weight:bold; cursor:pointer;';
     locateBtnM.addEventListener('click', () => { closeModal(); if (window.locateOnMap) window.locateOnMap(loc); });
 
     const closeBtn = document.createElement('button');

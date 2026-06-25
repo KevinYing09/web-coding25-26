@@ -1179,14 +1179,23 @@
 
     .map-filter-clear:hover { background: #27ae60 !important; }
 
-    /* "Locate on map" button on item cards */
+    /* "Locate on map" + "Inquire / Claim" buttons on item cards */
     .locate-btn {
-        background: #2C3E50;
+        background: #2c3e50;
         display: block;
         margin-top: 8px;
     }
 
-    .locate-btn:hover { background: #138d75 !important; }
+    .claim-btn {
+        background: #2c3e50;
+    }
+
+    /* on hover: tint the text orange, keep the background (no darkening) */
+    .locate-btn:hover,
+    .claim-btn:hover {
+        background: #2c3e50 !important;
+        color: #fca311 !important;
+    }
 
     /* transient toast for unmatched locations */
     .bm-toast {

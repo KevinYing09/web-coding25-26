@@ -146,7 +146,9 @@ function clearAISearch() {
 function toggleAIPanel() {
     const panel = document.getElementById('aiSearchPanel');
     const btn = document.getElementById('aiToggleBtn');
-    const isOpen = panel.style.display !== 'none';
+    // Read the actual rendered state — the panel starts hidden via CSS (no inline
+    // style), so checking panel.style.display alone misfired on the first click.
+    const isOpen = window.getComputedStyle(panel).display !== 'none';
     panel.style.display = isOpen ? 'none' : 'block';
     btn.setAttribute('aria-expanded', String(!isOpen));
     if (!isOpen) document.getElementById('aiDescInput').focus();
@@ -205,7 +207,7 @@ function refreshCardVisibility() {
                 if (badge) badge.remove();
             }
         } else {
-            card.style.outline = 'none';
+            card.style.outline = ''; // clear inline so the CSS :focus outline works again
             card.style.opacity = ''; // remove inline — CSS .in-view class controls fade
             const badge = card.querySelector('.ai-match-badge');
             if (badge) badge.remove();

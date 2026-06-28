@@ -185,6 +185,17 @@
         box-sizing: border-box;
     }
 
+    /* drop-shadow lift on hover for the gallery + modal buttons */
+    .card-content button,
+    .modal-content button {
+        transition: box-shadow 0.2s ease, background 0.3s ease, color 0.2s ease;
+    }
+
+    .card-content button:hover,
+    .modal-content button:hover {
+        box-shadow: 0 6px 16px rgba(0, 0, 0, 0.28);
+    }
+
     .card:hover img {
         transform: scale(1.08);
     }
@@ -231,6 +242,12 @@
         border: 1px solid #ddd;
         border-radius: 5px;
         box-sizing: border-box;
+    }
+
+    /* 16px text on all form fields stops iOS Safari from auto-zooming on tap
+       (without disabling the user's own pinch-to-zoom). */
+    input, select, textarea {
+        font-size: 16px;
     }
 
     button {

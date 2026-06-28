@@ -8,7 +8,7 @@ let aiMatchResults = null; // [{ id, reason }] or null
 let mapRoomFilter = null;   // canonical location key (lowercased) or null
 let mapRoomLabel  = '';     // human-readable label for the banner
 
-// Called by the building map (building-map.js) when a room is clicked
+// Filters the gallery to only show items found in the clicked map room.
 window.filterGalleryByRoom = function (roomName, label) {
     const key = window.resolveLocation ? window.resolveLocation(roomName) : null;
     mapRoomFilter = key || String(roomName || '').toLowerCase().trim();
@@ -19,6 +19,7 @@ window.filterGalleryByRoom = function (roomName, label) {
     if (grid) grid.scrollIntoView({ behavior: 'smooth', block: 'start' });
 };
 
+// Removes the active map room filter and restores the full gallery.
 window.clearMapRoomFilter = function () {
     mapRoomFilter = null;
     mapRoomLabel  = '';
@@ -27,6 +28,7 @@ window.clearMapRoomFilter = function () {
     refreshCardVisibility();
 };
 
+// Creates or updates the banner shown above the gallery when a map room filter is active.
 function showMapFilterBanner(label) {
     const grid = document.getElementById('itemsGrid');
     if (!grid) return;
@@ -51,6 +53,7 @@ function showMapFilterBanner(label) {
     banner.append(text, clearBtn);
 }
 
+// Sends the user's description to the AI worker, then highlights matching gallery items.
 async function findAIMatches() {
     const descInput = document.getElementById('aiDescInput');
     const resultsDiv = document.getElementById('aiResults');
@@ -131,6 +134,7 @@ async function findAIMatches() {
     }
 }
 
+// Resets the AI search state, clears the input, and collapses the AI panel.
 function clearAISearch() {
     aiMatchResults = null;
     document.getElementById('aiDescInput').value = '';
@@ -143,6 +147,7 @@ function clearAISearch() {
     if (toggle) toggle.setAttribute('aria-expanded', 'false');
 }
 
+// Shows or hides the AI description search panel and updates the toggle button state.
 function toggleAIPanel() {
     const panel = document.getElementById('aiSearchPanel');
     const btn = document.getElementById('aiToggleBtn');
@@ -154,7 +159,7 @@ function toggleAIPanel() {
     if (!isOpen) document.getElementById('aiDescInput').focus();
 }
 
-// Applies AI match highlighting on top of the regular filter
+// Re-evaluates every gallery card against the current search, category, map room, and AI match filters, then shows/hides cards and updates AI highlight badges accordingly.
 function refreshCardVisibility() {
     const searchTerm       = document.getElementById('searchInput') ? document.getElementById('searchInput').value.toLowerCase() : '';
     const selectedCategory = document.getElementById('categoryFilter') ? document.getElementById('categoryFilter').value : 'all';
@@ -276,6 +281,7 @@ const db      = firebase.firestore();
 const storage = firebase.storage();
 
 // ─── 2. ADMIN SECURITY — Firebase Auth ──────────────────────────────────────
+// Authenticates the admin via Firebase email/password and reveals the admin panel on success.
 function checkAdminPass() {
     const email = document.getElementById('adminEmail').value.trim();
     const pass  = document.getElementById('adminPass').value;
@@ -290,6 +296,7 @@ function checkAdminPass() {
         });
 }
 
+// Hides the login overlay and renders both the items and requests admin tables.
 function showAdminPanel() {
     const authOverlay  = document.getElementById('adminAuth');
     const adminContent = document.getElementById('adminContent');
@@ -354,6 +361,7 @@ if (fileInput) {
     });
 }
 
+// Updates the file-upload button text and color to reflect how many photos are selected.
 function updateFileLabel() {
     if (!fileLabel) return;
     if (selectedFiles.length === 0) {
@@ -365,6 +373,7 @@ function updateFileLabel() {
     }
 }
 
+// Rebuilds the photo preview grid, rendering a thumbnail and remove button for each selected file.
 function renderPhotoPreviews() {
     if (!previewGrid) return;
     previewGrid.innerHTML = '';
@@ -594,6 +603,7 @@ if (itemsGrid) {
 }
 
 // ─── SEARCH & CATEGORY FILTER ───────────────────────────────────────────────
+// Triggers a full card visibility refresh when search text or category changes.
 function applyFilters() {
     refreshCardVisibility();
 }
@@ -604,6 +614,7 @@ if (document.getElementById('searchInput')) {
 }
 
 // ─── MODAL with photo carousel ───────────────────────────────────────────────
+// Builds and displays the item detail modal with a photo carousel, item info, and action buttons.
 function openModal(images, name, loc, desc, id, imagesFull) {
     if (!Array.isArray(images)) images = [images]; // backwards compat
     // imagesFull: 1200px versions for carousel; fall back to images for old records
@@ -810,6 +821,7 @@ function openModal(images, name, loc, desc, id, imagesFull) {
 let modalPreviousFocus = null;
 let modalTrapHandler   = null;
 
+// Returns a keydown handler that traps Tab focus within the given container.
 function trapFocus(container) {
     const FOCUSABLE = 'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
     const elements  = Array.from(container.querySelectorAll(FOCUSABLE));
@@ -828,6 +840,7 @@ function trapFocus(container) {
     };
 }
 
+// Hides the modal, removes the focus trap, and restores focus to the previously active element.
 function closeModal() {
     const modal = document.getElementById('itemModal');
     if (modal) {
@@ -856,6 +869,7 @@ document.addEventListener('keydown', (e) => {
 });
 
 // ─── 5. ADMIN MANAGEMENT ────────────────────────────────────────────────────
+// Populates the admin items table with a live Firestore snapshot, showing approve/delete actions.
 function renderAdminTable() {
     const adminTable = document.getElementById('adminTable');
     if (!adminTable) return;
@@ -929,6 +943,7 @@ function renderAdminTable() {
     });
 }
 
+// Sets an item's status to "approved" so it appears in the public gallery.
 async function approveItem(id) {
     try {
         await db.collection('items').doc(id).update({ status: 'approved' });
@@ -939,6 +954,7 @@ async function approveItem(id) {
     }
 }
 
+// Permanently removes an item listing from Firestore after admin confirmation.
 async function deleteItem(id) {
     if (confirm('Are you sure you want to remove this listing?')) {
         await db.collection('items').doc(id).delete();
@@ -946,10 +962,12 @@ async function deleteItem(id) {
 }
 
 // ─── 6. CLAIM / INQUIRY ─────────────────────────────────────────────────────
+// Navigates the user to the claim page for the given item ID.
 function claimItem(id) {
     window.location.href = 'claim.html?id=' + id;
 }
 
+// Reads the item ID from the URL, fetches the item from Firestore, and renders its preview on claim.html.
 async function loadClaimPage() {
     const urlParams = new URLSearchParams(window.location.search);
     const itemId    = urlParams.get('id');
@@ -982,6 +1000,7 @@ async function loadClaimPage() {
     }
 }
 
+// Wires up the claim form's submit button to validate input and write the request to Firestore.
 function setupClaimSubmission(itemId, itemName) {
     const btn = document.getElementById('submitClaim');
     if (!btn) return;
@@ -1022,6 +1041,7 @@ function setupClaimSubmission(itemId, itemName) {
 }
 
 // ─── 7. ADMIN REQUESTS VIEWER ───────────────────────────────────────────────
+// Populates the admin requests table with a live Firestore snapshot of all claim/inquiry submissions.
 function renderRequestsTable() {
     const requestsTable = document.getElementById('requestsTable');
     if (!requestsTable) return;
@@ -1075,6 +1095,7 @@ function renderRequestsTable() {
     });
 }
 
+// Deletes a claim/inquiry request from Firestore after admin confirmation.
 async function deleteRequest(id) {
     if (confirm('Are you sure you want to remove this request?')) {
         try {

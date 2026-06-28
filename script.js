@@ -506,7 +506,16 @@ if (itemsGrid) {
               return;
           }
 
-          snapshot.forEach((doc) => {
+          // Sort newest first by timestamp (a just-added item with no server
+          // timestamp yet is treated as newest so it appears at the top).
+          const sortedDocs = snapshot.docs.slice().sort((a, b) => {
+              const ta = a.data().timestamp, tb = b.data().timestamp;
+              const ma = ta && ta.toMillis ? ta.toMillis() : Number.MAX_SAFE_INTEGER;
+              const mb = tb && tb.toMillis ? tb.toMillis() : Number.MAX_SAFE_INTEGER;
+              return mb - ma;
+          });
+
+          sortedDocs.forEach((doc) => {
               const item       = doc.data();
               // Support both multi-image and legacy single-image records
               const images     = item.images     && item.images.length     ? item.images     : [item.image];
@@ -1199,4 +1208,33 @@ introRows.forEach(row => observer.observe(row));
     } else {
         syncButton();
     }
+})();
+
+// ─── 11. DEMO PREFILL (your device only) ─────────────────────────────────────
+// Auto-fills the form text fields so you don't have to type during a demo.
+// It only runs on a device where you've enabled it once in the browser console:
+//     localStorage.demoPrefill = '1'              ← turn ON  (then refresh)
+//     localStorage.removeItem('demoPrefill')      ← turn OFF
+// Real visitors never see this because the flag lives only in your browser.
+(function () {
+    try { if (localStorage.getItem('demoPrefill') !== '1') return; } catch (e) { return; }
+
+    function fill(id, value) {
+        const el = document.getElementById(id);
+        if (el && !el.value) el.value = value;   // don't overwrite anything you've typed
+    }
+
+    // Report-an-item form
+    fill('itemName',     'AirPods Pro');
+    fill('location',     'Library');
+    fill('itemCategory', 'electronics');
+    fill('description',  'White AirPods Pro in a clear case, found on a table.');
+
+    // Claim / inquiry form
+    fill('studentName',    'Jordan Lee');
+    fill('studentContact', 'jordan.lee@school.org');
+    fill('claimMessage',   'I believe these are mine — I lost them on Tuesday.');
+
+    // Admin login: email only (never hard-code the password — see notes)
+    fill('adminEmail', 'kevin.ying.ut@gmail.com');
 })();

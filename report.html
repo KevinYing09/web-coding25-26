@@ -41,32 +41,62 @@
             <i class="fa fa-bars" aria-hidden="true"></i>
         </button>
         <ul class="navbar" id="mainNav">
-            <li><a href="index.html">View Items</a></li>
+            <li><a href="index.html">Home</a></li>
+            <li><a href="claim-items.html">Gallery</a></li>
             <li><a href="report.html" class="active">Report Found Item</a></li>
             <li><a href="admin.html">Admin Panel</a></li>
         </ul>
     </nav>
 
+    <header class="page-header">
+        <i class="fa fa-clipboard ph-icon" aria-hidden="true"></i>
+        <h1>Report a Found Item</h1>
+        <p>A few quick details and we'll help get it back to its owner.</p>
+    </header>
+
     <div class="form-container" id="main-content">
-        <h2>Found Something?</h2>
         <form id="reportForm">
-            <label>Item Name</label>
-            <input type="text" id="itemName" required aria-required="true" aria-label="Enter the name of the found item">
+            <div class="form-field">
+                <label for="itemName">Item Name</label>
+                <div class="input-wrap">
+                    <i class="fa fa-tag field-icon" aria-hidden="true"></i>
+                    <input type="text" id="itemName" required aria-required="true" aria-label="Enter the name of the found item">
+                </div>
+                <small class="field-hint">Be specific — e.g. "black North Face backpack".</small>
+            </div>
 
-            <label>Location Found</label>
-            <input type="text" id="location" required aria-required="true" aria-label="Where did you find this item?">
+            <div class="form-field">
+                <label for="location">Location Found</label>
+                <div class="input-wrap">
+                    <i class="fa fa-map-marker field-icon" aria-hidden="true"></i>
+                    <input type="text" id="location" required aria-required="true" aria-label="Where did you find this item?">
+                </div>
+                <small class="field-hint">Where on campus you found it — a room, hallway, the gym…</small>
+            </div>
 
-            <label>Category</label>
-            <select id="itemCategory" required style="width:100%; padding:10px; margin:10px 0 20px 0; border:1px solid #ddd; border-radius:5px;" aria-label="Select item category">
-                <option value="">Select a category</option>
-                <option value="electronics">Electronics</option>
-                <option value="clothing">Clothing</option>
-                <option value="water bottles">Water Bottles</option>
-                <option value="other">Other</option>
-            </select>
+            <div class="form-field">
+                <label for="itemCategory">Category</label>
+                <div class="input-wrap">
+                    <i class="fa fa-list field-icon" aria-hidden="true"></i>
+                    <select id="itemCategory" required aria-label="Select item category">
+                        <option value="">Select a category</option>
+                        <option value="electronics">Electronics</option>
+                        <option value="clothing">Clothing</option>
+                        <option value="water bottles">Water Bottles</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+                <small class="field-hint">Pick the closest match.</small>
+            </div>
 
-            <label>Description</label>
-            <textarea id="description" rows="4" aria-label="Provide additional details about the item"></textarea>
+            <div class="form-field">
+                <label for="description">Description</label>
+                <div class="input-wrap">
+                    <i class="fa fa-align-left field-icon" aria-hidden="true"></i>
+                    <textarea id="description" rows="4" aria-label="Provide additional details about the item"></textarea>
+                </div>
+                <small class="field-hint">Color, brand, distinguishing marks — anything that helps identify it.</small>
+            </div>
 
             <!-- Multi-photo upload -->
             <label for="photoFile" class="custom-file-upload" aria-label="Upload photos of the item">

@@ -27,6 +27,12 @@
             <input type="password" id="adminPass" placeholder="Password">
             <button onclick="checkAdminPass()" style="margin-top:12px; width:100%;">Login</button>
             <p id="loginError" style="color:red; display:none; margin-top:8px;">Incorrect email or password.</p>
+
+            <div class="auth-divider"><span>or</span></div>
+
+            <button type="button" class="btn-google" onclick="signInWithGoogle()" style="width:100%;">
+                <i class="fab fa-google" aria-hidden="true"></i> Sign in with Google
+            </button>
         </div>
     </div>
 

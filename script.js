@@ -282,6 +282,16 @@ const storage = firebase.storage();
 
 // ─── 2. ADMIN SECURITY — Firebase Auth ──────────────────────────────────────
 // Authenticates the admin via Firebase email/password and reveals the admin panel on success.
+// Google accounts allowed into the admin panel. Add your admin email(s) here.
+const ADMIN_EMAILS = ['kevin.ying.ut@gmail.com'];
+
+function showLoginError(msg) {
+    const el = document.getElementById('loginError');
+    if (!el) return;
+    el.textContent = msg;
+    el.style.display = 'block';
+}
+
 function checkAdminPass() {
     const email = document.getElementById('adminEmail').value.trim();
     const pass  = document.getElementById('adminPass').value;
@@ -292,7 +302,62 @@ function checkAdminPass() {
             showAdminPanel();
         })
         .catch(() => {
-            document.getElementById('loginError').style.display = 'block';
+            showLoginError('Incorrect email or password.');
+        });
+}
+
+// Checks a signed-in Google user against the admin allowlist.
+function handleGoogleUser(result) {
+    const user = result && result.user;
+    if (!user) return;
+    const email = (user.email || '').toLowerCase();
+    if (ADMIN_EMAILS.map(e => e.toLowerCase()).includes(email)) {
+        sessionStorage.setItem('isAdmin', 'true');
+        showAdminPanel();
+    } else {
+        // Signed in to Google, but not an approved admin — sign back out.
+        firebase.auth().signOut();
+        showLoginError('That Google account is not authorized for admin access.');
+    }
+}
+
+// Sign in with Google. Tries a popup first; if the browser blocks or closes it,
+// falls back to a full-page redirect (handled on load by handleGoogleRedirect).
+function signInWithGoogle() {
+    // Google sign-in can't run from a file:// page — it needs http(s).
+    if (location.protocol === 'file:') {
+        showLoginError('Google sign-in needs the site served over http(s), not opened as a local file. Use a local server (e.g. VS Code Live Server) or the deployed site.');
+        return;
+    }
+
+    const provider = new firebase.auth.GoogleAuthProvider();
+    provider.setCustomParameters({ prompt: 'select_account' });
+
+    firebase.auth().signInWithPopup(provider)
+        .then(handleGoogleUser)
+        .catch((err) => {
+            console.error('Google popup sign-in error:', err);
+            const popupIssue = err && (
+                err.code === 'auth/popup-blocked' ||
+                err.code === 'auth/popup-closed-by-user' ||
+                err.code === 'auth/cancelled-popup-request' ||
+                err.code === 'auth/operation-not-supported-in-this-environment'
+            );
+            if (popupIssue) {
+                firebase.auth().signInWithRedirect(provider);   // popup failed -> redirect instead
+            } else {
+                showLoginError('Google sign-in failed: ' + (err.message || 'please try again.'));
+            }
+        });
+}
+
+// Finishes a redirect-based Google sign-in after the page returns from Google.
+function handleGoogleRedirect() {
+    firebase.auth().getRedirectResult()
+        .then(function (result) { if (result && result.user) handleGoogleUser(result); })
+        .catch(function (err) {
+            console.error('Google redirect sign-in error:', err);
+            showLoginError('Google sign-in failed: ' + (err.message || 'please try again.'));
         });
 }
 
@@ -1121,6 +1186,7 @@ window.addEventListener('load', () => {
 
     if (path.includes('admin.html')) {
         if (sessionStorage.getItem('isAdmin') === 'true') showAdminPanel();
+        handleGoogleRedirect();   // complete a Google sign-in that used the redirect fallback
     }
 
     if (path.includes('claim.html')) {
@@ -1225,10 +1291,10 @@ introRows.forEach(row => observer.observe(row));
     }
 
     // Report-an-item form
-    fill('itemName',     'AirPods Pro');
+    fill('itemName',     'AirPods');
     fill('location',     'Library');
     fill('itemCategory', 'electronics');
-    fill('description',  'White AirPods Pro in a clear case, found on a table.');
+    fill('description',  'White AirPods in a white case, found on a table.');
 
     // Claim / inquiry form
     fill('studentName',    'Jordan Lee');

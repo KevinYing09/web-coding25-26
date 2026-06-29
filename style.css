@@ -164,6 +164,8 @@
         transition: box-shadow 0.3s, opacity 0.5s ease, transform 0.5s ease;
         opacity: 0;
         transform: translateY(28px);
+        display: flex;
+        flex-direction: column;
     }
 
     .card.in-view {
@@ -178,7 +180,16 @@
         transition: transform 0.5s ease;
     }
 
-    .card-content { padding: 26px; }
+    .card-content {
+        padding: 26px;
+        display: flex;
+        flex-direction: column;
+        flex: 1;
+    }
+
+    /* push the location + action buttons to the bottom as a group so they
+       align across cards regardless of how long the item title is */
+    .card-content p { margin-top: auto; }
 
     /* fixed-size icon buttons must ignore the larger global button padding */
     .bm-arrow, .bm-zoom button, .pod-nav, .pod-close { padding: 0; }

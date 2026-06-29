@@ -1104,7 +1104,7 @@ function setupClaimSubmission(itemId, itemName) {
             });
 
             alert('Your ' + type + ' has been sent successfully!');
-            window.location.href = 'claim-items.html';
+            window.location.href = 'gallery.html';
         } catch (error) {
             console.error('Submission Error:', error);
             alert('Error sending request: ' + error.message);

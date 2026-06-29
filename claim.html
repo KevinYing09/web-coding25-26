@@ -19,43 +19,71 @@
             <i class="fa fa-bars" aria-hidden="true"></i>
         </button>
         <ul class="navbar" id="mainNav">
-            <li><a href="index.html">Back to Gallery</a></li>
+            <li><a href="index.html">Home</a></li>
+            <li><a href="claim-items.html">Gallery</a></li>
+            <li><a href="report.html">Report Found Item</a></li>
+            <li><a href="admin.html">Admin Panel</a></li>
         </ul>
     </nav>
 
-    <div class="form-container" id="main-content" style="max-width:600px; margin:40px auto; padding:20px;">
+    <header class="page-header">
+        <i class="fa fa-paper-plane ph-icon" aria-hidden="true"></i>
+        <h1>Claim or Ask About an Item</h1>
+        <p>Tell us how to reach you and we'll connect you with the Main Office.</p>
+    </header>
+
+    <div class="form-container" id="main-content" style="max-width:600px; margin:36px auto 60px; padding:24px;">
         <div id="itemPreview" style="text-align:center; margin-bottom:20px;">
             <p>Loading item details…</p>
         </div>
 
-        <h2 id="formHeader">Inquire / Claim Item</h2>
         <div id="claimForm">
-            <label for="studentName">Your Name</label>
-            <input type="text" id="studentName" required aria-label="Your full name">
-
-            <label for="studentContact">Contact Info (Email / Phone)</label>
-            <input type="text" id="studentContact" required aria-label="Your contact information">
-
-            <label>Request Type</label>
-            <div class="radio-group" style="display:flex; gap:20px; margin-bottom:20px; padding:10px 0;">
-                <label style="display:flex; align-items:center; cursor:pointer; font-weight:normal;">
-                    <input type="radio" name="requestType" value="Claim" checked style="margin-right:8px; width:auto;">
-                    <strong>Claim</strong>&nbsp;(I am the owner)
-                </label>
-                <label style="display:flex; align-items:center; cursor:pointer; font-weight:normal;">
-                    <input type="radio" name="requestType" value="Inquiry" style="margin-right:8px; width:auto;">
-                    <strong>Inquiry</strong>&nbsp;(I have a question)
-                </label>
+            <div class="form-field">
+                <label for="studentName">Your Name</label>
+                <div class="input-wrap">
+                    <i class="fa fa-user field-icon" aria-hidden="true"></i>
+                    <input type="text" id="studentName" required aria-label="Your full name">
+                </div>
+                <small class="field-hint">So we know who's claiming the item.</small>
             </div>
 
-            <label for="claimMessage">Message to Admin</label>
-            <textarea id="claimMessage" rows="4" placeholder="Ask a question or provide proof of ownership…" aria-label="Proof of ownership message or question about item"></textarea>
+            <div class="form-field">
+                <label for="studentContact">Contact Info (Email / Phone)</label>
+                <div class="input-wrap">
+                    <i class="fa fa-envelope field-icon" aria-hidden="true"></i>
+                    <input type="text" id="studentContact" required aria-label="Your contact information">
+                </div>
+                <small class="field-hint">How the Main Office can reach you.</small>
+            </div>
+
+            <div class="form-field">
+                <label>Request Type</label>
+                <div class="radio-group" style="display:flex; gap:20px; margin-bottom:6px; padding:6px 0;">
+                    <label style="display:flex; align-items:center; cursor:pointer; font-weight:normal;">
+                        <input type="radio" name="requestType" value="Claim" checked style="margin-right:8px; width:auto;">
+                        <strong>Claim</strong>&nbsp;(I am the owner)
+                    </label>
+                    <label style="display:flex; align-items:center; cursor:pointer; font-weight:normal;">
+                        <input type="radio" name="requestType" value="Inquiry" style="margin-right:8px; width:auto;">
+                        <strong>Inquiry</strong>&nbsp;(I have a question)
+                    </label>
+                </div>
+            </div>
+
+            <div class="form-field">
+                <label for="claimMessage">Message to Admin</label>
+                <div class="input-wrap">
+                    <i class="fa fa-comment field-icon" aria-hidden="true"></i>
+                    <textarea id="claimMessage" rows="4" placeholder="Ask a question or provide proof of ownership…" aria-label="Proof of ownership message or question about item"></textarea>
+                </div>
+                <small class="field-hint">Describe the item or prove it's yours — stickers, contents, where you lost it…</small>
+            </div>
 
             <button type="button" id="submitClaim" style="color:white; width:100%; margin-bottom:10px;">Send Request</button>
 
             <!-- Cancel button — returns to gallery without submitting -->
             <button type="button"
-                    onclick="window.location.href='index.html'"
+                    onclick="window.location.href='claim-items.html'"
                     style="width:100%; background:#95a5a6; color:white;">
                 Cancel — Back to Gallery
             </button>

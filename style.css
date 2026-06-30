@@ -387,7 +387,7 @@
         display: flex;
         justify-content: center;
         align-items: center;
-        z-index: 1000;
+        z-index: 90;   /* below the sticky nav (z-index 100) so nav stays clickable */
     }
 
     .auth-box {
@@ -1631,8 +1631,8 @@
         max-width: 480px;
     }
 
-    /* larger subtitle for the gallery hero typewriter line */
-    .gallery-hero .ih-subtitle {
+    /* larger subtitle for the hero typewriter line (home + gallery) */
+    .ih-subtitle.tw-line {
         font-size: 1.4rem;
         opacity: 0.9;
     }

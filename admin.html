@@ -17,6 +17,23 @@
 <body>
     <a href="#main-content" class="skip-link">Skip to main content</a>
 
+    <!-- Nav stays visible even on the login screen so you can navigate away -->
+    <nav>
+        <a href="index.html" class="logo" aria-label="Skyline Lost and Found home">
+            <img src="images/logo.png" alt="School Logo" class="nav-logo">
+            <span>Admin Portal</span>
+        </a>
+        <button class="hamburger" aria-label="Toggle navigation" aria-expanded="false" aria-controls="mainNav">
+            <i class="fa fa-bars" aria-hidden="true"></i>
+        </button>
+        <ul class="navbar" id="mainNav">
+            <li><a href="index.html">Home</a></li>
+            <li><a href="gallery.html">Gallery</a></li>
+            <li><a href="report.html">Report Found Item</a></li>
+            <li><a href="admin.html" class="active">Admin Panel</a></li>
+        </ul>
+    </nav>
+
     <!-- Auth overlay: shown by default, hidden after successful login -->
     <div id="adminAuth" class="auth-overlay">
         <div class="auth-box">
@@ -38,22 +55,6 @@
 
     <!-- All admin content is hidden until login succeeds -->
     <div id="adminContent" style="display:none;">
-        <nav>
-            <a href="index.html" class="logo" aria-label="Skyline Lost and Found home">
-                <img src="images/logo.png" alt="School Logo" class="nav-logo">
-                <span>Admin Portal</span>
-            </a>
-            <button class="hamburger" aria-label="Toggle navigation" aria-expanded="false" aria-controls="mainNav">
-                <i class="fa fa-bars" aria-hidden="true"></i>
-            </button>
-            <ul class="navbar" id="mainNav">
-                <li><a href="index.html">Home</a></li>
-                <li><a href="gallery.html">Gallery</a></li>
-                <li><a href="report.html">Report Found Item</a></li>
-                <li><a href="admin.html" class="active">Admin Panel</a></li>
-            </ul>
-        </nav>
-
         <main id="main-content">
             <h2>Manage Postings</h2>
             <div style="background:white; padding:20px; border-radius:8px; box-shadow:0 4px 6px rgba(0,0,0,0.05); overflow-x:auto;">

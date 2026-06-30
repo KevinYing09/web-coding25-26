@@ -1304,3 +1304,58 @@ introRows.forEach(row => observer.observe(row));
     // Admin login: email only (never hard-code the password — see notes)
     fill('adminEmail', 'kevin.ying.ut@gmail.com');
 })();
+
+// ─── HERO TYPEWRITER ─────────────────────────────────────────────────────────
+// Loops through the phrases listed in the #typewriter element's data-phrases
+// attribute (a JSON array): types each out, pauses, backspaces, then advances.
+(function () {
+    function initTypewriter() {
+        var el = document.getElementById('typewriter');
+        if (!el) return;
+
+        var phrases;
+        try { phrases = JSON.parse(el.getAttribute('data-phrases') || '[]'); }
+        catch (e) { phrases = []; }
+        if (!phrases.length) return;
+
+        // Respect users who prefer reduced motion: show a static phrase instead.
+        if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+            el.textContent = phrases[0];
+            var caret = document.querySelector('.tw-caret');
+            if (caret) caret.style.display = 'none';
+            return;
+        }
+
+        var TYPE_SPEED = 80;   // ms per character typed
+        var ERASE_SPEED = 45;  // ms per character deleted
+        var HOLD = 1000;       // pause once fully typed
+        var BETWEEN = 300;     // pause before typing the next phrase
+        var p = 0;
+
+        function type() {
+            var word = phrases[p], i = 0;
+            (function add() {
+                el.textContent = word.slice(0, i++);
+                if (i <= word.length) setTimeout(add, TYPE_SPEED);
+                else setTimeout(erase, HOLD);
+            })();
+        }
+
+        function erase() {
+            var word = phrases[p], i = word.length;
+            (function del() {
+                el.textContent = word.slice(0, i--);
+                if (i >= 0) setTimeout(del, ERASE_SPEED);
+                else { p = (p + 1) % phrases.length; setTimeout(type, BETWEEN); }
+            })();
+        }
+
+        type();
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initTypewriter);
+    } else {
+        initTypewriter();
+    }
+})();

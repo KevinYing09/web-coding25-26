@@ -37,10 +37,9 @@
         <div class="intro-heading-content">
             <span class="ih-eyebrow">Skyline High School</span>
             <h1 class="ih-title">
-                <span class="ih-title-light">Browse the</span>
                 <span class="ih-title-bold">Lost &amp; Found</span>
             </h1>
-            <p class="ih-subtitle">Search for a found item, describe what you lost, or use the interactive map to see where things were turned in.</p>
+            <p class="ih-subtitle"><span id="typewriter"></span><span class="tw-caret" aria-hidden="true">|</span></p>
         </div>
         <div class="custom-shape-divider-bottom-1782209749">
             <svg data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 120" preserveAspectRatio="none">
@@ -204,5 +203,48 @@
         }
     </script>
     <script type="text/javascript" src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
+
+    <!-- Looping typewriter effect in the gallery hero subtitle -->
+    <script>
+    (function () {
+        var el = document.getElementById('typewriter');
+        if (!el) return;
+        var phrases = ["Don't know where?", "Lost an Item?", "Want to Report Something?"];
+
+        // Respect users who prefer reduced motion: show a static phrase instead.
+        if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+            el.textContent = phrases[0];
+            var caret = document.querySelector('.tw-caret');
+            if (caret) caret.style.display = 'none';
+            return;
+        }
+
+        var TYPE_SPEED = 80;   // ms per character typed
+        var ERASE_SPEED = 45;  // ms per character deleted
+        var HOLD = 1000;       // pause once fully typed
+        var BETWEEN = 300;     // pause before typing the next phrase
+        var p = 0;
+
+        function type() {
+            var word = phrases[p], i = 0;
+            (function add() {
+                el.textContent = word.slice(0, i++);
+                if (i <= word.length) setTimeout(add, TYPE_SPEED);
+                else setTimeout(erase, HOLD);
+            })();
+        }
+
+        function erase() {
+            var word = phrases[p], i = word.length;
+            (function del() {
+                el.textContent = word.slice(0, i--);
+                if (i >= 0) setTimeout(del, ERASE_SPEED);
+                else { p = (p + 1) % phrases.length; setTimeout(type, BETWEEN); }
+            })();
+        }
+
+        type();
+    })();
+    </script>
 </body>
 </html>

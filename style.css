@@ -1631,6 +1631,24 @@
         max-width: 480px;
     }
 
+    /* larger subtitle for the gallery hero typewriter line */
+    .gallery-hero .ih-subtitle {
+        font-size: 1.4rem;
+        opacity: 0.9;
+    }
+
+    /* blinking caret for the gallery hero typewriter effect */
+    .tw-caret {
+        display: inline-block;
+        margin-left: 2px;
+        font-weight: 400;
+        animation: tw-blink 1s steps(1) infinite;
+    }
+
+    @keyframes tw-blink {
+        50% { opacity: 0; }
+    }
+
     .intro-heading-bg {
         position: absolute;
         inset: 0;
